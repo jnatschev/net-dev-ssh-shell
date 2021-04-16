@@ -221,10 +221,6 @@ import socket
 import paramiko
 import regex as re
 
-__version__ = '3.0.0dev1'
-__author__ = 'John Natschev <jnatschev@icloud.com>'
-__license__ = 'GNU General Public License v3.0 (GNU GPLv3)'
-
 
 class SshShellConnectionError(ConnectionError):
     """

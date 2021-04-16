@@ -231,3 +231,8 @@ __all__ = [
     'paramiko',
     're'
 ]
+
+__version_info = (1, 0, 0)
+__version__ = '{}.{}.{}'.format(*__version_info)
+__author__ = 'John Natschev <jnatschev@icloud.com>'
+__license__ = 'GNU General Public License v3.0 (GNU GPLv3)'
