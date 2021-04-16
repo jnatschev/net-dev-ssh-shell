@@ -1,0 +1,14 @@
+*.txt eol=lf
+*.py eol=lf
+*.md eol=lf
+COPYING eol=lf
+direct_url.json eol=lf
+INSTALLER eo=lf
+LICENSE.txt eol=lf
+METADATA  eol=lf
+RECORD eol=lf
+REQUESTED eol=lf
+top_level.txt eol=lf
+WHEEL eol=lf
+.gitattributes eol=lf
+.gitignore eol=lf
