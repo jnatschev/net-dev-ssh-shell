@@ -29,7 +29,7 @@ to a native ssh client.
   - nix: `unalias -a && export PS1="shellprompt$ "`
 ### DEPENDENCIES  
   - paramiko>=2.7.2 
-  - regex>=2020.11.13  
+  - regex>=2021.3.17  
 ### EXPOSURES
 The two dependencies, ***paramiko*** and ***regex*** are exposed when this
 package is imported as a module:
