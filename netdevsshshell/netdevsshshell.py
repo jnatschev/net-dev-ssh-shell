@@ -382,13 +382,6 @@ class NetDevSshShell:
 
         if self._shell.recv_ready():
             self.shell_receive_command_output()
-            # while self._shell.recv_ready():
-            #     self.shell_received_bytes += self.ansi_escape_regexp.sub(
-            #         b'',
-            #         self._shell.recv(
-            #             self.shell_receive_bytes
-            #         )
-            #     )
 
         if self.shell_cli_type == 'auto':
             self.shell_send_and_receive('show version', timeout=5.0)
