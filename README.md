@@ -30,9 +30,6 @@ to a native ssh client.
 ### DEPENDENCIES  
   - paramiko>=2.7.2 
   - regex>=2020.11.13  
->  #### NOTE:  
->  The dependency ***regex*** is included within this project.  
->  Place the ***netdevsshshell*** directory in a PYTHONPATH directory.  
 ### EXPOSURES
 The two dependencies, ***paramiko*** and ***regex*** are exposed when this
 package is imported as a module:
