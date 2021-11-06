@@ -266,14 +266,14 @@ class NetDevSshShell:
 
     def __del__(self):
         if hasattr(self, '_shell'):
-            self._shell.close()
-            self._client.close()
+            delattr(self, '_shell')
+            delattr(self, '_client')
 
     def __init__(self, hostname: str, username: str, password: str,
                  port: int = 22, terminal_width: int = 132,
                  terminal_height: int = 132, cli_type: str = 'auto',
                  shell_receive_timeout: float = 90.0, jump_hostname=None,
-                 jump_username=None, jump_password=None):
+                 jump_username=None, jump_password=None) -> None:
         """
         `NetDevSshShell` initialisation method definition
 
@@ -323,29 +323,67 @@ class NetDevSshShell:
             username based authentication
         """
         super().__init__()
+        self.hostname: str = hostname
+        self.username: str = username
+        self.password: str = password
+        self.shell_terminal_width: int = terminal_width
+        self.shell_terminal_height: int = terminal_height
         self._jump_channel = None
         self.receive_encoding = 'cp1252'
         self.shell_cli_type = self.set_shell_cli_type(cli_type)
-
+        self.shell_prompt_pattern = br'''
+            [
+                [:alpha:]{1,}
+                [:digit:]{0,}
+                [:punct:]{0,}
+                [:space:]{0,}
+            ]{1,50}?
+            [#$%>]{1}
+            [[:space:]]{0,1}
+            $
+        '''
         self.shell_prompt_regexp = re.compile(
-            br'(?=[\r\n]{1}[[:alpha:]{1,}[:digit:]{0,}[:punct:]{0,} {0,}]{1,50}[#$%>]{1} {0,1}$)',
-            flags=re.I
+            self.shell_prompt_pattern,
+            re.VERSION1 | re.VERBOSE
         )
-
+        self.ansi_escape_pattern = br'''
+            (?:
+                [[:cntrl:]]
+                \]
+                [[:graph:]]{1,}?
+                [[:cntrl:]]
+                |
+                [[:cntrl:]]
+                \[
+                [[:digit:]]
+                [[:alpha:]]
+                [[:punct:]]{0,1}
+                |
+                [[:cntrl:]]
+                \[
+                [[:alpha:]]
+                |
+                [[:cntrl:]]
+                \[
+                [[:punct:]]
+                [[:digit:]]{1,4}
+                [[:alpha:]]
+                |
+                [[:alpha:]]
+                [[:cntrl:]]
+            )
+        '''
         self.ansi_escape_regexp = re.compile(
-            br'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]',
-            flags=re.IGNORECASE
+            self.ansi_escape_pattern,
+            re.VERSION1 | re.VERBOSE
         )
-
         self.shell_receive_timeout: float = shell_receive_timeout
         self.shell_transcript: str = ''
-        self.shell_terminal_width: int = terminal_width
-        self.shell_terminal_height: int = terminal_height
-        self.shell_receive_bytes: int = (
+        self.number_of_bytes: int = (
                 self.shell_terminal_width *
                 self.shell_terminal_height
         )
-        self.shell_received_bytes: bytes = b''
+        self.received_bytes: bytes = b''
         self._client = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(
                 paramiko.AutoAddPolicy()
@@ -360,19 +398,19 @@ class NetDevSshShell:
             )
 
         self._client.connect(
-            hostname,
-            port=port,
-            username=username,
-            password=password,
-            allow_agent=False,
-            look_for_keys=False,
-            sock=self._jump_channel
+             hostname,
+             port=port,
+             username=username,
+             password=password,
+             allow_agent=False,
+             look_for_keys=False,
+             sock=self._jump_channel
         )
 
         self._shell = self._client.invoke_shell(
                 term='vt100',
                 width=self.shell_terminal_width,
-                height=self.shell_terminal_height,
+                height=self.shell_terminal_height
         )
 
         self._shell.settimeout(self.shell_receive_timeout)
@@ -385,17 +423,10 @@ class NetDevSshShell:
 
         if self.shell_cli_type == 'auto':
             self.shell_send_and_receive('show version', timeout=5.0)
-
-            self.shell_transcript += self.shell_received_bytes.decode(
-                self.receive_encoding
-            )
-
             if 'ios' in self.shell_transcript.lower():
                 self.shell_cli_type = 'ios'
-            
             elif 'junos' in self.shell_transcript.lower():
                 self.shell_cli_type = 'junos'
-            
             elif ('incorrect usage' in self.shell_transcript.lower() or
                     'key to list commands' in self.shell_transcript.lower()):
                 self.shell_cli_type = 'cwlc'
@@ -461,8 +492,11 @@ class NetDevSshShell:
         :raises `SshShellConnectionError`:
             Raised if `self._shell.closed` is `True`.
         """
+        full_command = command + ' ' + '\r'
+        command_as_bytes = full_command.encode()
+
         if not self._shell.closed:
-            self._shell.sendall('{}\r'.format(command).encode())
+            self._shell.sendall(command_as_bytes)
         else:
             error_text = 'SHELL CONNECTION ERROR: Unable to send command,' \
                          '`{}`, to remote SSH server because it seems that' \
@@ -499,33 +533,30 @@ class NetDevSshShell:
         if timeout not in timeout_values:
             self._shell.settimeout(timeout)
 
-        self.shell_received_bytes = b''
+        self.received_bytes = b''
 
-        while not self.shell_prompt_regexp.search(self.shell_received_bytes):
+        while not self.shell_prompt_regexp.search(self.received_bytes):
             try:
-                self.shell_received_bytes += self.ansi_escape_regexp.sub(
+                self.received_bytes += self.ansi_escape_regexp.sub(
                     b'',
                     self._shell.recv(
-                        self.shell_receive_bytes
+                        self.number_of_bytes
                     )
                 )
-                sleep(0.2)
+                sleep(0.5)
             except socket.timeout:
-                self.shell_transcript += self.shell_received_bytes.decode(
-                    self.receive_encoding
-                )
+                self.shell_transcript += self.received_bytes.decode()
                 raise
 
             if self._shell.closed:
                 break
 
-        self.shell_transcript += self.shell_received_bytes.decode(
-            self.receive_encoding
-        )
+        self.shell_transcript += self.received_bytes.decode()
 
         self._shell.settimeout(original_timeout)
 
-    def shell_send_and_receive(self, command: str, timeout: float = -1.0) -> None:
+    def shell_send_and_receive(self, command: str,
+                               timeout: float = -1) -> None:
         """
         shell_send_and_receive Method Definition
 
@@ -553,6 +584,7 @@ class NetDevSshShell:
             the remote ssh shell prompt
         """
         self.shell_send_command(command=command)
+        sleep(0.5)
         self.shell_receive_command_output(timeout=timeout)
 
     @staticmethod

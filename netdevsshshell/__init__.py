@@ -215,8 +215,6 @@ This programming includes Jump Host capability, a la the OpenSSH
                 timeout=15.0)
         print(ssh.shell_transcript)
 """
-import os
-import sys
 import paramiko
 import regex as re
 from .netdevsshshell import NetDevSshShell, SshShellConnectionError
@@ -228,7 +226,7 @@ __all__ = [
     're'
 ]
 
-__version_info__ = (1, 0, 1)
+__version_info__ = (1, 0, 2)
 __version__ = '{}.{}.{}'.format(*__version_info__)
 __author__ = 'John Natschev <jnatschev@icloud.com>'
 __license__ = 'GNU General Public License v3.0 (GNU GPLv3)'
