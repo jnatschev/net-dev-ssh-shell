@@ -58,13 +58,241 @@ For instance, the output of the ios-like command `show tech-support` has
 - jump_password: None
 ##### ATTRIBUTES
 - receive_encoding: 'cp1252'
-- shell_prompt_regexp:
-`br'(?=[\r\n]{1}[[:alpha:]{1,}[:digit:]{0,}[:punct:]{0,} {0,}]{1,50}[#$%>]{1} {0,1}$)'`
-shell_prompt_regexp may altered to suit other requirements after the shell
-has been initialised/instantiated.
-- ansi_escape_regexp:
-`br'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]'`  
+- shell_prompt_pattern:
+```
+br'''
+    [
+        [:alpha:]{1,}
+        [:digit:]{0,}
+        [:punct:]{0,}
+        [:space:]{0,}
+    ]{1,50}?
+    [#$%>]{1}
+    [[:space:]]{0,1}
+    $
+'''
+```
+shell_prompt_pattern may altered to suit other requirements after the shell
+has been initialised/instantiated. NOTE: MUST BE BYTES AND IS COMPILED BY
+REGEX (as re) with flags VERSION1 | VERBOSE
+- ansi_escape_pattern:
+```
+br'''
+    (?:
+        [[:cntrl:]]
+        \]
+        [[:graph:]]{1,}?
+        [[:cntrl:]]
+        |
+        [[:cntrl:]]
+        \[
+        [[:digit:]]
+        [[:alpha:]]
+        [[:punct:]]{0,1}
+        |
+        [[:cntrl:]]
+        \[
+        [[:alpha:]]
+        |
+        [[:cntrl:]]
+        \[
+        [[:punct:]]
+        [[:digit:]]{1,4}
+        [[:alpha:]]
+        |
+        [[:alpha:]]
+        [[:cntrl:]]
+    )
+'''
+```
 The purpose of this regular expression is to remove ansi escape sequences  
 from the output of some commands that interfere with this program's  
-normal processing.
-###USAGE
+normal processing.  
+
+### USAGE
+This programming includes Jump Host capability, a la the OpenSSH
+`-J destination` command-line option or `ProxyJump` ssh_config option.
+
+PRE-CONDITIONS:
+-   After authenticating to a Cisco-like network device the user *MUST* be
+        presented with a `privileged exec` prompt "<prompt_string>#". The
+        programming has no capability for working out whether the `enable`
+        command ought to be used or not.
+
+DURING-CONDITIONS:
+-   RETRIEVED COMMAND OUTPUT
+    Retrieved command output is stored by the attribute:
+    `.shell_received_output`
+
+    `.shell_received_output` is reset to '' with each call to:
+    `.shell_receive_command_output()`
+
+POST-CONDITIONS:
+-   SSH SHELL PAGING IS DISABLED
+    During initialisation of the object shell command output paging is
+    disabled. That is:
+    Cisco IOS-like:
+        `terminal length 0` is executed
+    Juniper JunOS-like:
+        `set cli screen-length 0` is executed
+
+    Rationale:
+    Since this programming turns an interactive ssh shell into a relatively
+    non-interactive ssh shell, processing `--MORE--` in output is silly.
+
+    Therefore when instantiating, one needs to be mindful of supplying a
+    value to the initialisation parameter `cli_type`. `cli_type` does have
+    a default value of 'auto'.
+
+### EXAMPLES:
+NON JUMP HOST Cisco IOS-like or Juniper JunOS-like (auto discovery `cli_type`):
+```
+from netdevsshshell import NetDevSshShell
+
+# cli_type='auto' MAY BE OMITTED BECAUSE IT IS DEFAULT
+ssh = NetDevSshShell('hostname', username='username', password='password, cli_type='auto')
+
+# PROCESS COMMANDS
+ssh.shell_send_and_receive('show running-config')
+print(ssh.shell_transcript)
+
+# WHEN COMPLETE
+# THIS WILL EXPLICITLY CLOSE BOTH SHELL AND CLIENT
+del ssh
+```
+OR
+```
+from netdevsshshell import NetDevSshShell
+
+# cli_type='auto' MAY BE OMITTED BECAUSE IT IS DEFAULT
+ssh = NetDevSshShell('hostname', username='username', password='password, cli_type='auto')
+with ssh:
+    ssh.shell_send_and_receive('show tech-support', timeout=100.0)
+    ssh.shell_send_and_receive('show ip interface brief', timeout=1.5)
+    ssh.shell_send_and_receive('show inventory', timeout=2.6)
+    ssh.shell_send_and_receive('exit', timeout=1.0)
+    print(ssh.shell_transcript)
+```
+
+NON JUMP HOST Cisco IOS-like:
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname', username='username', password='password, cli_type='ios')
+
+# PROCESS COMMANDS
+ssh.shell_send_and_receive('show running-config')
+print(ssh.shell_transcript)
+
+# WHEN COMPLETE
+# THIS WILL EXPLICITLY CLOSE BOTH SHELL AND CLIENT
+del ssh
+```
+OR
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname', username='username', password='password, cli_type='ios')
+with ssh:
+    ssh.shell_send_and_receive('show tech-support', timeout=100.0)
+    ssh.shell_send_and_receive('show ip interface brief', timeout=1.5)
+    ssh.shell_send_and_receive('show inventory', timeout=2.6)
+    ssh.shell_send_and_receive('exit', timeout=1.0)
+    print(ssh.shell_transcript)
+```
+
+NON JUMP HOST Juniper JunOS-like:
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname',username='username', password='password', cli_type='junos')
+
+# PROCESS COMMANDS
+ssh.shell_send_and_receive('show configuration | display set')
+print(ssh.shell_transcript)
+
+# WHEN COMPLETE
+# THIS WILL EXPLICITY CLOST BOTH SHELL AND CLIENT
+del ssh
+```
+OR
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname',username='username', password='password', cli_type='junos')
+with ssh:
+    ssh.shell_send_and_receive('show configuration', timeout=20.0)
+    ssh.shell_send_and_receive('show configuration | display set', timeout=15.0)
+    ssh.shell_send_and_receive('quit', timeout=2.0)
+    print(ssh.shell_transcript)
+```
+
+JUMP HOST Cisco IOS-like:
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname',
+                     username='username',
+                     password='password',
+                     cli_type='ios',
+                     jump_hostname='jump_hostname',
+                     jump_username='jump_username',
+                     jump_password='jump_password'
+)
+
+# PROCESS COMMANDS
+ssh.shell_send_and_receive('show running-config')
+ssh.shell_send_and_receive('show startup-config')
+print(ssh.shell_transcript)
+```
+OR
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname',
+                     username='username',
+                     password='password',
+                     cli_type='ios',
+                     jump_hostname='jump_hostname',
+                     jump_username='jump_username',
+                     jump_password='jump_password'
+)
+
+with ssh:
+    ssh.shell_send_and_receive('show running-config')
+    ssh.shell_send_and_receive('show startup-config')
+    print(ssh.shell_transcript)
+```
+
+JUMP HOST Juniper JunOS-like:
+```
+from netdevsshshell import NetDevSshShell
+    ssh = NetDevSshShell('hostname',
+                         username='username',
+                         password='password',
+                         cli_type='junos',
+                         jump_hostname='jump_hostname',
+                         jump_username='jump_username',
+                         jump_password='jump_password'
+    )
+    
+    # PROCESS COMMANDS
+    ssh.shell_send_and_receive('show configuration | display set')
+    print(ssh.shell_transcript)
+
+    # WHEN COMPLETE
+    # THIS WILL EXPLICITLY CLOSE BOTH SHELL AND CLIENT
+    del ssh
+```
+OR
+```
+from netdevsshshell import NetDevSshShell
+ssh = NetDevSshShell('hostname',
+                     username='username',
+                     password='password',
+                     cli_type='junos',
+                     jump_hostname='jump_hostname',
+                     jump_username='jump_username',
+                     jump_password='jump_password'
+)
+
+with ssh:
+    ssh.shell_send_and_receive('show configuration', timeout=20.0)
+    ssh.shell_send_and_receive('show configuration | display set', timeout=15.0)
+    print(ssh.shell_transcript)
+ ```
+ 
