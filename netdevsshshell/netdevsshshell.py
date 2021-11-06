@@ -333,6 +333,7 @@ class NetDevSshShell:
         self.shell_cli_type = self.set_shell_cli_type(cli_type)
         self.shell_prompt_pattern = br'''
             [
+                [\r\n]
                 [:alpha:]{1,}
                 [:digit:]{0,}
                 [:punct:]{0,}
@@ -543,7 +544,7 @@ class NetDevSshShell:
                         self.number_of_bytes
                     )
                 )
-                sleep(0.5)
+                sleep(1.0)
             except socket.timeout:
                 self.shell_transcript += self.received_bytes.decode()
                 raise
@@ -584,7 +585,7 @@ class NetDevSshShell:
             the remote ssh shell prompt
         """
         self.shell_send_command(command=command)
-        sleep(0.5)
+        sleep(1.0)
         self.shell_receive_command_output(timeout=timeout)
 
     @staticmethod
