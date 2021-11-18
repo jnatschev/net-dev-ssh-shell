@@ -379,11 +379,11 @@ class NetDevSshShell:
             re.VERSION1 | re.VERBOSE
         )
         self.shell_receive_timeout: float = shell_receive_timeout
-        self.shell_transcript: str = ''
-        self.number_of_bytes: int = (
-                self.shell_terminal_width *
-                self.shell_terminal_height
-        )
+        # self.number_of_bytes: int = (
+        #         self.shell_terminal_width *
+        #         self.shell_terminal_height
+        # )
+        self.receive_number_of_bytes = 16384
         self.received_bytes: bytes = b''
         self._client = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(
@@ -420,7 +420,7 @@ class NetDevSshShell:
             sleep(1.0)
 
         if self._shell.recv_ready():
-            self.shell_receive_command_output()
+            self.shell_receive()
 
         if self.shell_cli_type == 'auto':
             self.shell_send_and_receive('show version', timeout=5.0)
@@ -473,7 +473,7 @@ class NetDevSshShell:
         else:
             return cli_type
 
-    def shell_send_command(self, command: str) -> None:
+    def shell_send(self, command: str) -> None:
         """
         `shell_send_command` definition
 
@@ -498,13 +498,14 @@ class NetDevSshShell:
 
         if not self._shell.closed:
             self._shell.sendall(command_as_bytes)
+            sleep(1.0)
         else:
             error_text = 'SHELL CONNECTION ERROR: Unable to send command,' \
                          '`{}`, to remote SSH server because it seems that' \
                          'the shell is closed'.format(command)
             raise SshShellConnectionError(error_text)
 
-    def shell_receive_command_output(self, timeout: float = -1.0) -> None:
+    def shell_receive(self, timeout: float = -1.0) -> None:
         """
         shell_receive_command_output Method Definition
 
@@ -534,25 +535,25 @@ class NetDevSshShell:
         if timeout not in timeout_values:
             self._shell.settimeout(timeout)
 
-        self.received_bytes = b''
+        received_bytes = b''
 
-        while not self.shell_prompt_regexp.search(self.received_bytes):
+        while not self.shell_prompt_regexp.search(received_bytes):
             try:
-                self.received_bytes += self.ansi_escape_regexp.sub(
+                received_bytes += self.ansi_escape_regexp.sub(
                     b'',
                     self._shell.recv(
-                        self.number_of_bytes
+                        self.receive_number_of_bytes
                     )
                 )
                 sleep(1.0)
             except socket.timeout:
-                self.shell_transcript += self.received_bytes.decode()
+                self.received_bytes += received_bytes
                 raise
 
             if self._shell.closed:
                 break
 
-        self.shell_transcript += self.received_bytes.decode()
+        self.received_bytes += received_bytes
 
         self._shell.settimeout(original_timeout)
 
@@ -584,9 +585,8 @@ class NetDevSshShell:
             If the set timeout is hit without receiving data prior to detecting
             the remote ssh shell prompt
         """
-        self.shell_send_command(command=command)
-        sleep(1.0)
-        self.shell_receive_command_output(timeout=timeout)
+        self.shell_send(command=command)
+        self.shell_receive(timeout=timeout)
 
     @staticmethod
     def _return_jump_channel(destination: str,
@@ -634,3 +634,7 @@ class NetDevSshShell:
         )
 
         return channel
+
+    @property
+    def shell_transcript(self):
+        return self.received_bytes.decode()
