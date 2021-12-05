@@ -33,15 +33,15 @@ The programming is like a wrapper, I suppose, around:
 
     DEFAULTS:
     `paramiko.SSHClient().connect().invoke_shell` width: 132
-        Exposed when instantiating with the parameter `terminal_width`
+        Exposed when instantiating with the parameter `shell_terminal_width`
 
     `paramiko.SSHClient().connect().invoke_shell` height: 128
-        Exposed when instantiating with the parameter `terminal_height`
+        Exposed when instantiating with the parameter `shell_terminal_height`
 
-    `.shell_receive_bytes`: terminal_width * terminal_height
+    `.shell_receive_bytes`: shell_terminal_width * shell_terminal_height
         Indirectly exposed through:
-          -   `terminal_width`
-          -   `terminal_height`
+          -   `shell_terminal_width`
+          -   `shell_terminal_height`
 
 This implementation of will capture all shell output to:
     `<instance>.shell_received_bytes`
@@ -73,7 +73,7 @@ This programming includes Jump Host capability, a la the OpenSSH
 
     EXAMPLES:
     NON JUMP HOST Cisco IOS-like or Juniper JunOS-like
-    (auto discovery `cli_type`):
+    (auto discovery `shell_cli_type`):
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password)
     # PROCESS COMMANDS
@@ -96,7 +96,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     NON JUMP HOST Cisco IOS-like:
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password,
-                          cli_type='ios')
+                          shell_cli_type='ios')
     # PROCESS COMMANDS
     ndss.shell_send_and_receive('show running-config')
     print(ssh.shell_transcript)
@@ -107,7 +107,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     OR
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password,
-                          cli_type='ios')
+                          shell_cli_type='ios')
     with ndss:
         ndss.shell_send_and_receive('show tech-support', timeout=100.0)
         ndss.shell_send_and_receive('show ip interface brief', timeout=1.5)
@@ -118,7 +118,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     NON JUMP HOST Juniper JunOS-like:
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='junos')
+                          shell_cli_type='junos')
 
     # PROCESS COMMANDS
     ndss.shell_send_and_receive('show configuration | display set')
@@ -130,7 +130,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     OR
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='junos')
+                          shell_cli_type='junos')
     with ndss:
         # PROCESS COMMANDS
         ndss.shell_send_and_receive('show configuration', timeout=20.0)
@@ -142,7 +142,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     JUMP HOST Cisco IOS-like:
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='ios', jump_hostname='jump_hostname',
+                          shell_cli_type='ios', jump_hostname='jump_hostname',
                           jump_username='jump_username',
                           jump_password='jump_password')
     # PROCESS COMMANDS
@@ -153,7 +153,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     OR
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='ios', jump_hostname='jump_hostname',
+                          shell_cli_type='ios', jump_hostname='jump_hostname',
                           jump_username='jump_username',
                           jump_password='jump_password')
     with ndss:
@@ -164,7 +164,7 @@ This programming includes Jump Host capability, a la the OpenSSH
     JUMP HOST Juniper JunOS-like:
     from netdevsshshell import NetDevSshShell
     ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='junos', jump_hostname='jump_hostname',
+                          shell_cli_type='junos', jump_hostname='jump_hostname',
                           jump_username='jump_username',
                           jump_password='jump_password')
     # PROCESS COMMANDS
@@ -186,19 +186,19 @@ import paramiko
 import regex as re
 from .netdevsshshell import (
     NetDevSshShell, ShellCliTypeError, ShellClosedError,
-    ShellReceiveTimeoutError
+    ShellTimeoutError
 )
 
 __all__ = [
     'NetDevSshShell',
     'ShellCliTypeError',
     'ShellClosedError',
-    'ShellReceiveTimeoutError',
+    'ShellTimeoutError',
     'paramiko',
     're'
 ]
 
-__version_info__ = (1, 0, 5)
+__version_info__ = (2, 0, 0)
 __version__ = '{}.{}.{}'.format(*__version_info__)
 __author__ = 'John Natschev <jnatschev@icloud.com>'
 __license__ = 'GNU General Public License v3.0 (GNU GPLv3)'
