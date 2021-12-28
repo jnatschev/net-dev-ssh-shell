@@ -1,186 +1,55 @@
 # -*- coding: utf-8 -*-
+# netdevsshshell: a python interactive ssh shell depending on paramiko for the
+# ssh shell and regex for determining the ssh shell prompt signifying the end
+# of the full output of an executed command.
 # Copyright (C) 2021 John Natschev <jnatschev@icloud.com>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public License along
+# with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# paramiko:
+# see https://github.com/paramiko/paramiko/blob/main/LICENSE
+# regex:
+# see https://github.com/mrabarnett/mrab-regex/blob/hg/LICENSE.txt
+#
 """
-netdevsshshell is a Python module to establish a ssh shell with a network
-device. A network device is a Cisco-like and JunOs-like network device, such as
-routers and switches.
+netdevsshshell is a python interactive ssh shell depending on paramiko for the
+ssh shell and regex for determining the ssh shell prompt signifying the end of
+the full output of an executed command.
 
-This programming is based on:
-`paramiko.SSHClient`
-and more particularly:
-`paramiko.SSHClient().connect().invoke_shell()`
+The idea behind the creation of this program is
+- simplicity of use:
+  in essence, a secure shell client replacement. This program does provide minor
+  enhancements to enable users of this program to:
+  - preset the shell prompt regualar expression;
+    regex is used as the regular expression engine to enable the use of POSIX
+    character classes.
+  - execute a network device "no pagination" command;
+  - use a secure shell jump host to reach the target ssh server. The equivalent
+    of the OpenSSH -J option.
+- change management governance:
+  all ssh shell output is stored in an attribute. The ssh shell output may then
+  be written to a file and this file may be added to a change record as a
+  transcript of the ssh shell session, demonstrating adherence to a change
+  record implementation plan.
 
-The purpose of this program is to provide a ssh shell to network devices and
-execute (send) a number of commands to the network device. It was found that
-other `ssh` implementations will `ssh` connect to a network device, execute
-(run) a command and close.
+netdevsshshell depends on paramiko and regex.
+- Paramiko provides netdevsshshell the ssh shell capability.
+  https://paramiko.org
 
-The programming is like a wrapper, I suppose, around:
-`paramiko.SSHClient().connect().invoke_shell()`
-
-    DEFAULTS:
-    `paramiko.SSHClient().connect().invoke_shell` width: 132
-        Exposed when instantiating with the parameter `terminal_width`
-
-    `paramiko.SSHClient().connect().invoke_shell` height: 128
-        Exposed when instantiating with the parameter `terminal_height`
-
-    `.shell_receive_bytes`: terminal_width * terminal_height
-        Indirectly exposed through:
-          -   `terminal_width`
-          -   `terminal_height`
-
-This implementation of will capture all shell output to:
-    `<instance>.shell_received_bytes`
-
-In turn, `<instance>.shell_received_bytes` has a `str` representation through
-a `@property` decorated attribute: `<instance>.shell_transcript`.
-
-The program uses a `str` object representing the shell prompt pattern. The
-`<instance>.shell_receive()` method continues to receive bytes from the SSH
-server until the shell prompt pattern is detected before the specified
-`float` timeout value. The default `timeout` value is ninety (90/90.0) seconds.
-
-This programming includes Jump Host capability, a la the OpenSSH
-`-J destination` command-line option or `ProxyJump` ssh_config option.
-
-    PRE-CONDITIONS:
-    - After authenticating to a Cisco-like network device the user *MUST* be
-      presented with a `privileged exec` prompt "<prompt_string>#". The
-      programming has no capability for working out whether the `enable`
-      command ought to be used or not.
-
-    DURING-CONDITIONS:
-    - SHELL RECEIVED BYTES
-      Retrieved command output is stored by the attribute:
-      `<instance>.shell_received_bytes`
-
-    - NETWORK DEVICE SHELL PAGING
-      Network device shell paging is disabled.
-
-    EXAMPLES:
-    NON JUMP HOST Cisco IOS-like or Juniper JunOS-like
-    (auto discovery `cli_type`):
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password)
-    # PROCESS COMMANDS
-    ndss.shell_send_and_receive('show running-config')
-    print(ndss.shell_transcript)
-
-    # WHEN COMPLETE
-    del ndss           # This will explicitly close both the shell and client
-
-    OR
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password)
-    with ndss:
-        ndss.shell_send_and_receive('show tech-support', timeout=100.0)
-        ndss.shell_send_and_receive('show ip interface brief', timeout=1.5)
-        ndss.shell_send_and_receive('show inventory', timeout=2.6)
-        ndss.shell_send_and_receive('exit', timeout=1.0)
-        print(ndss.shell_transcript)
-
-    NON JUMP HOST Cisco IOS-like:
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password,
-                          cli_type='ios')
-    # PROCESS COMMANDS
-    ndss.shell_send_and_receive('show running-config')
-    print(ssh.shell_transcript)
-
-    # WHEN COMPLETE
-    del ndss           # This will explicitly close both the shell and client
-
-    OR
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password,
-                          cli_type='ios')
-    with ndss:
-        ndss.shell_send_and_receive('show tech-support', timeout=100.0)
-        ndss.shell_send_and_receive('show ip interface brief', timeout=1.5)
-        ndss.shell_send_and_receive('show inventory', timeout=2.6)
-        ndss.shell_send_and_receive('exit', timeout=1.0)
-    print(ssh.shell_transcript)
-
-    NON JUMP HOST Juniper JunOS-like:
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='junos')
-
-    # PROCESS COMMANDS
-    ndss.shell_send_and_receive('show configuration | display set')
-    print(ndss.shell_transcript)
-
-    # WHEN COMPLETE
-    del ndss           # This will explicitly close both the shell and client
-
-    OR
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='junos')
-    with ndss:
-        # PROCESS COMMANDS
-        ndss.shell_send_and_receive('show configuration', timeout=20.0)
-        ndss.shell_send_and_receive('show configuration | display set',
-                                    timeout=15.0)
-        ndss.shell_send_and_receive('quit', timeout=2.0)
-    print(ndss.shell_transcript)
-
-    JUMP HOST Cisco IOS-like:
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='ios', jump_hostname='jump_hostname',
-                          jump_username='jump_username',
-                          jump_password='jump_password')
-    # PROCESS COMMANDS
-    ndss.shell_send_and_receive('show running-config')
-    ndss.shell_send_and_receive('show startup-config')
-    print(ndss.shell_transcript)
-
-    OR
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='ios', jump_hostname='jump_hostname',
-                          jump_username='jump_username',
-                          jump_password='jump_password')
-    with ndss:
-        ndss.shell_send_and_receive('show running-config')
-        ndss.shell_send_and_receive('show startup-config')
-    print(ndss.shell_transcript)
-
-    JUMP HOST Juniper JunOS-like:
-    from netdevsshshell import NetDevSshShell
-    ndss = NetDevSshShell('hostname', username='username', password='password',
-                          cli_type='junos', jump_hostname='jump_hostname',
-                          jump_username='jump_username',
-                          jump_password='jump_password')
-    # PROCESS COMMANDS
-    ndss.shell_send_and_receive('show configuration | display set')
-    print(ndss.shell_transcript)
-
-    # WHEN COMPLETE
-    del ndss                  # This will explicitly close both the shell and
-                              # client
-
-    OR
-    with ndss:
-        ndss.shell_send_and_receive('show configuration', timeout=20.0)
-        ndss.shell_send_and_receive('show configuration | display set',
-                                   timeout=15.0)
-    print(ndss.shell_transcript)
+- Regex provides alternative regular expression processing capability. Namely
+  the use of POSIX regular expression character classes.
+  https://github.com/mrabarnett/mrab-regex
 """
 from time import sleep
 
@@ -191,7 +60,9 @@ import regex as re
 
 class ShellCliTypeError(ValueError):
     """
-    Used if the supplied `cli_type` value is unsupported.
+    Used if the supplied `shell_cli_type` value is unsupported.
+
+    `ShellCliTypeError` is a sublass of `ValueError`
     """
 
 
@@ -203,302 +74,306 @@ class ShellClosedError(EOFError):
     """
 
 
-class ShellReceiveTimeoutError(TimeoutError):
+class ShellSendError(Exception):
     """
-    Used if the shell prompt has not been received before a specified timeout.
+    Used during `<instance>.shell_send(<command>)`
     """
+
+
+class ShellTimeoutError(TimeoutError):
+    """
+    Used if a `<instance>.shell_send()` or `<instance>.shell_receive()`
+    encounter a shell socket.timeout error.
+    """
+
+
+class ShellReceiveNumberOfBytes(int):
+    def __new__(cls, shell_terminal_width=132, shell_terminal_height=30):
+        cls.shell_terminal_width = shell_terminal_width
+        cls.shell_terminal_height = shell_terminal_height
+        return super(ShellReceiveNumberOfBytes, cls).__new__(
+            cls,
+            shell_terminal_width * shell_terminal_height
+        )
 
 
 class NetDevSshShell:
     """
     NetDevSshShell Object Definition
     """
-    shell_cli_types = (
-        'auto',
-        'ios',
-        'cwlc',
-        'junos',
-        'nix'
-    )
-
-    shell_initial_command = {
-        'ios': 'terminal length 0',
-        'cwlc': 'config paging disable',
-        'junos': 'set cli screen-length 0',
-        'nix': 'unalias -a && export PS1="shellprompt$ "'
-    }
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._shell.close()
-        self._client.close()
-
-    def __del__(self):
-        if hasattr(self, '_shell'):
-            delattr(self, '_shell')
-            delattr(self, '_client')
-
+    ShellPromptPattern = '[\r\n][[:print:]]{1,50}?[#$%>]{1}[[:blank:]]{0,1}$'
+    
     def __init__(self, hostname: str, username: str, password: str,
-                 port: int = 22, terminal_type: str = 'xterm',
-                 terminal_width: int = 132, terminal_height: int = 128,
-                 cli_type: str = 'auto', shell_receive_timeout: float = 90.0,
-                 jump_hostname=None, jump_username=None,
-                 jump_password=None) -> None:
+                 port: int = 22, shell_terminal_type: str = 'xterm',
+                 shell_terminal_width: int = 132,
+                 shell_terminal_height: int = 128,
+                 shell_timeout: float = 15.0,
+                 shell_prompt_pattern=ShellPromptPattern,
+                 no_pagination_command=None, jump_hostname=None,
+                 jump_username=None, jump_password=None) -> None:
         """
-        `NetDevSshShell` initialisation
+        `NetDevSshShell` initialisation method
+        
+        :param hostname:
+            `str` object representing the target ssh server hostname or IP
+            Address.
 
-        Args:
-            hostname:
-                `str` object representing the hostname or IP Address of the
-                target SSH server.
+        :param username:
+            `str` object representing the username to authenticate to the target
+            ssh server.
 
-            username:
-                `str` object representing the username used to authenticate to
-                the SSH server.
+        :param password:
+            `str` object representing the password of the username to
+            authenticate to the target ssh server.
 
-            password:
-                `str` object representing the password of the username used
-                to authenticate to the SSH server.
+        :param port:
+            `int` object representing the port number of the target ssh server.
 
-            port:
-                `int` object representing the port number of the SSH server.
+        :param shell_terminal_type:
+            `str` object representing the shell terminal type. For example:
+            - vt100
+            - xterm (default)
+            - xterm-256color
 
-            terminal_type:
-                `str` object representing the shell terminal type:
-                  - vt100
-                  - xterm (Default)
-                  - xterm-256color
+        :param shell_terminal_width:
+            `int` object representing the shell terminal width.
+            Default: 132
 
-            terminal_width:
-                `str` object representing the shell terminal width.
-                Default value: 132
+        :param shell_terminal_height:
+            `int` object representing the shell terminal height.
+            Default: 30
 
-            terminal_height:
-                `str` object representing the shell terminal height.
-                Default value: 128
+        :param shell_timeout:
+            `float` or `int` object representing a shell timeout in seconds.
+            Default: 15.0
+        
+        :param shell_prompt_pattern:
+            `str` object representing a regex compatible regular expression
+            representing an expected ssh shell prompt.
+            Default: None
 
-            cli_type:
-                `str` object representing the command-line interface type:
-                  - auto (Default)
-                  - ios (Cisco IOS-like shells)
-                  - cwlc (Cisco Wireless LAN Controller)
-                  - junos (Juniper Junos-like shells)
-                  - 'nix' (Linux/Unix shells)
+        :param no_pagination_command:
+            `str` object representing a command to be used to turn shell
+            pagination off. Examples of such a command are:
+            - Cisco-like network devices:
+              'terminal length 0'
+            - Juniper JunOS network devices:
+              'set cli screen-length 0'
+            Default: None
 
-            shell_receive_timeout:
-                `float` object representing the period to wait for the shell
-                prompt before raising a `socket.timeout`
+        :param jump_hostname:
+            `str` object representing the hostname or IP Address of a jump ssh
+            server used to get to the target ssh server. Equivalent to OpenSSH
+            option -J.
+            Default: None
 
-            jump_hostname:
-                `str` object representing the hostname or IP Address of a SSH
-                server used as a jump host to establish a connection with the
-                target SSH server. Equivalent to openssh "ssh -J".
+        :param jump_username:
+            `str` object representing the username to authenticate to the jump
+            ssh host.
+            Default: None
 
-            jump_username:
-                `str` object representing the username used to authenticate to
-                the jump host.
-
-            jump_password:
-                `str` object representing the password of the username used to
-                authenticate to the jump host.
-
-        Raises:
-            `ShellCliTypeError`
-                If the supplied value for `cli_type` is invalid.
-
-            `paramiko.ssh_exception.SSHException`:
-                If there was an error connecting or establishing an SSH session.
-
-            `paramiko.ssh_exception.AuthenticationException`
-                If authentication fails.
-
-            `socket.error`
-                if a socket error was detected during connection.
+        :param jump_password:
+            `str` object representing the password of the username to
+            authenticate to the jump ssh host.
+            Default: None
         """
         super().__init__()
         self.hostname: str = hostname
+        self.port: int = port
         self.username: str = username
         self.password: str = password
-        self.shell_terminal_type: str = terminal_type
-        self.shell_terminal_width: int = terminal_width
-        self.shell_terminal_height: int = terminal_height
-        self._jump_channel = None
-        self.shell_cli_type: str = self._validate_supplied_cli_type(cli_type)
-        self.shell_receive_timeout: float = shell_receive_timeout
-        self.shell_receive_number_of_bytes: int = (
-                self.shell_terminal_width * self.shell_terminal_height
+
+        self.shell_prompt_pattern = '{}'.format(
+            shell_prompt_pattern
+        ).encode(
+            'unicode_escape'
         )
+
+        self.shell_prompt_regexp = re.compile(
+            self.shell_prompt_pattern,
+            flags=re.VERSION1
+        )
+        self.shell_terminal_type: str = shell_terminal_type
+        self.shell_receive_number_of_bytes = ShellReceiveNumberOfBytes(
+            shell_terminal_width=shell_terminal_width,
+            shell_terminal_height=shell_terminal_height
+        )
+        self._jump_channel = None
+        self.shell_timeout: float = shell_timeout
         self.shell_received_bytes: bytes = ''.encode()
         self._client: paramiko.SSHClient = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(
                 paramiko.AutoAddPolicy()
         )
 
+        self._set_jump_channel(jump_hostname, jump_username, jump_password)
+        self._ssh_client_connect()
+
+        self._shell = self._return_ssh_shell()
+
+        self._shell.settimeout(self.shell_timeout)
+        self.shell_receive()
+        self._shell_execute_no_pagination_command(no_pagination_command)
+
+    def _shell_execute_no_pagination_command(self,
+                                             no_pagination_command: str
+                                             ) -> None:
+        """
+
+        :param no_pagination_command:
+            `str` object representing a no pagination command. That is, for
+            example, "terminal length 0" for Cisco IOS shell-like platforms or
+            "set cli screen-length 0" for Juiper JunOS shell-like platforms.
+
+        :return:
+            `NoneType`
+        """
+        if no_pagination_command:
+            self.shell_send_and_receive(no_pagination_command, timeout=1.0)
+
+    def _return_ssh_shell(self) -> paramiko.channel.Channel:
+        """
+        Invoke an ssh shell with its parameter (term, width, height), set the
+        ssh shell timeout, and return the ssh shell.
+
+        :return:
+            `paramiko.channel.Channel` object representing a ssh shell.
+        """
+        ssh_shell = self._client.invoke_shell(
+            term=self.shell_terminal_type,
+            width=self.shell_receive_number_of_bytes.shell_terminal_width,
+            height=self.shell_receive_number_of_bytes.shell_terminal_height
+        )
+        ssh_shell.settimeout(self.shell_timeout)
+        return ssh_shell
+
+    def _ssh_client_connect(self) -> None:
+        """
+        Perform a paramiko.SSHClient object connect.
+
+        :return:
+            `NoneType`
+        """
+        self._client.connect(
+            self.hostname,
+            port=self.port,
+            username=self.username,
+            password=self.password,
+            allow_agent=False,
+            look_for_keys=False,
+            sock=self._jump_channel
+        )
+
+    def _set_jump_channel(
+            self,
+            jump_hostname,
+            jump_username,
+            jump_password
+    ) -> None:
+        """
+        If values for jump_hostname and jump_username and jump_password were
+        supplied, then set the jump channel.
+
+        :param jump_hostname:
+            `str` object representing the jump ssh server hostname
+
+        :param jump_username:
+            `str` object representing the jump ssh server username to
+            authenticate with.
+
+        :param jump_password:
+            `str` object representing the jump ssh server username password to
+            authenticate with.
+
+        :return:
+            `NoneType`
+        """
         if jump_hostname and jump_username and jump_password:
             self._jump_channel = self._return_jump_channel(
-                hostname,
+                self.hostname,
                 jump_hostname=jump_hostname,
                 jump_username=jump_username,
                 jump_password=jump_password
             )
 
-        self._client.connect(
-             hostname,
-             port=port,
-             username=username,
-             password=password,
-             allow_agent=False,
-             look_for_keys=False,
-             sock=self._jump_channel
-        )
-
-        self._shell = self._client.invoke_shell(
-                term=self.shell_terminal_type,
-                width=self.shell_terminal_width,
-                height=self.shell_terminal_height
-        )
-
-        self._shell.settimeout(self.shell_receive_timeout)
-
-        self._shell_receive()
-
-        if self.shell_cli_type == 'auto':
-            self.shell_send('show version')
-            self._shell_receive()
-
-            if (
-                    'ios' in self.shell_transcript.lower()
-                    or
-                    'eos' in self.shell_transcript.lower()
-            ):
-                self.shell_cli_type = 'ios'
-            elif 'junos' in self.shell_transcript.lower():
-                self.shell_cli_type = 'junos'
-            elif ('incorrect usage' in self.shell_transcript.lower() or
-                    'key to list commands' in self.shell_transcript.lower()):
-                self.shell_cli_type = 'cwlc'
-            else:
-                self.shell_cli_type = 'nix'
-
-        self.shell_send(command=self.shell_initial_command[self.shell_cli_type])
-        self._shell_receive()
-
-        self.shell_prompt_pattern = self.shell_received_bytes.splitlines()[-1]
-
-    def _validate_supplied_cli_type(self, cli_type: str) -> str:
-        """
-        Validate the value of the supplied CLI Type.
-
-        Args:
-            cli_type:
-                `str` object representing the shell cli type of the SSH server.
-                - auto (Default)
-                - ios
-                - cwlc
-                - junos
-                - nix
-        Returns:
-            `str` object representing a valid shell cli type.
-        """
-        if cli_type not in self.shell_cli_types:
-            error_text = 'The supplied value of `cli_type` is unsupported.'
-            raise ShellCliTypeError(error_text)
-        else:
-            return cli_type
-
     @property
-    def _is_shell_closed(self) -> False:
+    def shell_is_closed(self) -> bool:
         """
+        `<instance>.shell_is_closed` @property decorated method representing
+        `<instance>._shell.closed`
 
-        Returns:
-            `NoneType`
-
-        Raises:
-            `ShellClosedError`
+        :return:
+            `bool`
         """
-        if self._shell.closed:
-            raise ShellClosedError()
-        else:
-            return False
+        return self._shell.closed
 
-    @property
-    def _remove_ansi_escape_sequences(self) -> bytes:
+    @staticmethod
+    def _remove_ansi_escape_sequences(string_as_bytes) -> bytes:
         """
-        Remove unnecessary shell prompt escape sequences.
+        Remove ANSI Escape characters.
 
-        Returns:
+        :param string_as_bytes:
+            `bytes` object representing the string to have ANSI Escape
+            characters removed.
+
+        :return:
             `bytes`
         """
-        escape_sequence_patterns = br'''
+        ansi_escape_pattern = br'''
             \x1b
             [[:punct:]]
-            [[:print:]]{1,}?
+            [[:print:]]{1,}
             \x07
             |
             \x1b
             [[:punct:]]
-            [[:digit:]]
-            [[:lower:]]
+            [[:digit:]]{1,2}
+            (?:
+                [[:upper]]
+                |
+                [[:lower:]]
+            )
             [[:punct:]]{0,1}
             |
             \x1b
             [[:punct:]]
-            [[:lower:]]
+            [
+                [:upper:]
+                [:lower:]
+            ]
             |
             \x1b
-            [[:punct:]]
-            [[:upper:]]
+            [[:punct:]]{1,2}
+            [[:graph:]]{4,5}
             |
-            \x1b
-            [[:punct:]]{2}
-            [[:graph:]]{4,6}
-            [\x08]{0,1}
+            [[:alpha:]]\x08
             |
             [ ]*\r[ ]*
         '''
         escape_sequence_regexp = re.compile(
-            escape_sequence_patterns,
+            ansi_escape_pattern,
             flags=re.VERBOSE | re.VERSION0
         )
-        return escape_sequence_regexp.sub(b'', self.shell_received_bytes)
-
-    def _shell_receive(self) -> None:
-        """
-        Used during instance initialisation to receive shell output from the
-        SSH server.
-
-        The reason it is used instead of the exposed
-        `<instance>.shell_receive()` method is because the shell prompt hasn't
-        been determined yet.
-
-        Returns:
-            `NoneType`
-        """
-        if not self._shell.recv_ready():
-            sleep(1.0)
-
-        if self._shell.recv_ready():
-            while self._shell.recv_ready():
-                self.shell_received_bytes += self._shell.recv(
-                    self.shell_receive_number_of_bytes
-                )
-                sleep(1.0)
+        return escape_sequence_regexp.sub(b'', string_as_bytes)
 
     @property
     def shell_transcript(self) -> str:
         """
         Return a `str` representation of `<instance>.shell_received_bytes`,
-        where `<instance>.shell_received_bytes` is a `bytes` representation.
+        where `<instance>.shell_received_bytes` is a `bytes` representation of
+        the whole ssh shell session.
 
         Returns:
             `str`
         """
         return '\n'.join(
             [
-                v.decode() for v in
-                self._remove_ansi_escape_sequences.splitlines()
+                i.decode('utf-8') for i in
+                [
+                    self._remove_ansi_escape_sequences(v)
+                    for v in self.shell_received_bytes.splitlines()
+                ]
+                if not re.search(br'^ {0,}$', i)
             ]
         )
 
@@ -515,17 +390,35 @@ class NetDevSshShell:
             `NoneType`
 
         Raises:
+            `ShellSendError`
             `ShellClosedError`
         """
-        command_plus_cr_as_bytes = '{}\r'.format(command).encode()
+        send_sleep_time = 0.17
+        command_to_send = '{}\r'.format(command)
+        command_to_send_length = len(command_to_send)
+        original_shell_timeout = self._shell.gettimeout()
+        new_shell_timeout = command_to_send_length * send_sleep_time + 5.0
 
-        if not self._is_shell_closed:
-            self._shell.sendall(command_plus_cr_as_bytes)
+        self._shell.settimeout(new_shell_timeout)
+
+        if not self.shell_is_closed:
+            try:
+                self._shell.sendall(command_to_send.encode())
+            except socket.timeout as socket_timeout:
+                raise ShellTimeoutError(
+                    'SHELL TIMEOUT ERROR: Unable to send command, {}, within '
+                    'shell timeout {} seconds'.format(
+                        command_to_send, new_shell_timeout
+                    )
+                ) from socket_timeout
         else:
             error_text = 'SHELL CLOSED ERROR: Unable to send command,' \
                          '`{}`, to remote SSH server because the shell is ' \
                          'closed.'.format(command)
             raise ShellClosedError(error_text)
+
+        self._shell.settimeout(original_shell_timeout)
+        sleep(1.0)
 
     def shell_receive(self, timeout: float = -1.0) -> None:
         """
@@ -540,32 +433,36 @@ class NetDevSshShell:
 
         Raises:
             `ShellClosedError`
-            `ShellReceiveTimeoutError`
+            `ShellTimeoutError`
         """
         timeout_values = (-1, -1.0, 90, 90.0, 0, 0.0)
-        original_timeout = self.shell_receive_timeout
+        original_shell_timeout = self.shell_timeout
 
         if timeout not in timeout_values:
             self._shell.settimeout(timeout)
 
         received_bytes = ''.encode()
 
-        while not received_bytes.endswith(self.shell_prompt_pattern):
-            if not self._is_shell_closed:
-                sleep(1.0)
-            else:
-                raise ShellClosedError('SHELL CLOSED ERROR')
-
+        while not self.shell_prompt_regexp.search(
+            self._remove_ansi_escape_sequences(received_bytes)
+        ):
             try:
-                received_bytes += self._shell.recv(self.shell_receive_number_of_bytes)
-            except socket.timeout:
-                error_text = 'SHELL TIMEOUT ERROR: shell prompt pattern not ' \
-                             'received before timeout value.'
-                raise ShellReceiveTimeoutError(error_text)
+                received_bytes += self._shell.recv(1024)
+                # print(received_bytes)
+                # print(self._remove_ansi_escape_sequences(received_bytes))
+                if not self._shell.recv_ready():
+                    sleep(1.0)
+            except socket.timeout as socket_timeout:
+                error_text = 'SHELL TIMEOUT ERROR: shell prompt pattern ' \
+                             'not received before timeout {}'.format(timeout)
+                raise ShellTimeoutError(error_text) from socket_timeout
+
+            if self.shell_is_closed:
+                break
 
         self.shell_received_bytes += received_bytes
 
-        self._shell.settimeout(original_timeout)
+        self._shell.settimeout(original_shell_timeout)
 
     def shell_send_and_receive(self, command: str, timeout: float = -1) -> None:
         """
@@ -642,3 +539,38 @@ class NetDevSshShell:
         )
 
         return channel
+
+    def __str__(self):
+        return self.shell_transcript
+
+    def __repr__(self):
+        repr_text = '<{}(Hostname={}, ' \
+                    'Port Number={}, ' \
+                    'Shell Terminal Type={}, ' \
+                    'Shell Terminal Width={}, ' \
+                    'Shell Terminal Height={}, ' \
+                    'Shell CLI Type={}, ' \
+                    'Shell Timeout={}, ' \
+                    'Shell Receive Number of Bytes={})>'
+        return repr_text.format(
+            self.__class__.__name__,
+            self.hostname,
+            self.port,
+            self.shell_terminal_type,
+            self.shell_receive_number_of_bytes.shell_terminal_width,
+            self.shell_receive_number_of_bytes.shell_terminal_height,
+            self.shell_timeout,
+            self.shell_receive_number_of_bytes
+        )
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._shell.close()
+        self._client.close()
+
+    def __del__(self):
+        if hasattr(self, '_shell'):
+            delattr(self, '_shell')
+            delattr(self, '_client')
