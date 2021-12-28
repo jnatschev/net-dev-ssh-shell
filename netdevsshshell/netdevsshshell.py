@@ -112,7 +112,7 @@ class NetDevSshShell:
                  no_pagination_command=None, jump_hostname=None,
                  jump_username=None, jump_password=None) -> None:
         """
-        `NetDevSshShell` initialisation method
+        `NetDevSshShell` instance initialisation method
         
         :param hostname:
             `str` object representing the target ssh server hostname or IP
