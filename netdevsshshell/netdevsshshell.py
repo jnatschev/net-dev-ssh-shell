@@ -52,7 +52,7 @@ netdevsshshell depends on paramiko and regex.
   https://github.com/mrabarnett/mrab-regex
 """
 from time import sleep
-
+import ipaddress
 import socket
 import paramiko
 import regex as re
@@ -101,12 +101,22 @@ class NetDevSshShell:
     """
     NetDevSshShell Object Definition
     """
-    ShellPromptPattern = '[\r\n][[:print:]]{1,50}?[#$%>]{1}[[:blank:]]{0,1}$'
+    ShellPromptPattern = '[\r\n]' \
+                         '[' \
+                         '[:alnum:]{1,}' \
+                         '[:punct:]{1,}' \
+                         '[:blank:]{0,}' \
+                         ']{1,50}?' \
+                         '[#$%>]{1}' \
+                         '[[:blank:]]{0,1}' \
+                         '$'
     
-    def __init__(self, hostname: str, username: str, password: str,
+    def __init__(self, hostname: str | ipaddress.IPv4Address |
+                 ipaddress.IPv6Address,
+                 username: str, password: str,
                  port: int = 22, shell_terminal_type: str = 'xterm',
                  shell_terminal_width: int = 132,
-                 shell_terminal_height: int = 128,
+                 shell_terminal_height: int = 30,
                  shell_timeout: float = 15.0,
                  shell_prompt_pattern=ShellPromptPattern,
                  no_pagination_command=None, jump_hostname=None,
@@ -178,7 +188,7 @@ class NetDevSshShell:
             Default: None
         """
         super().__init__()
-        self.hostname: str = hostname
+        self.hostname: str = str(hostname)
         self.port: int = port
         self.username: str = username
         self.password: str = password
@@ -549,9 +559,8 @@ class NetDevSshShell:
                     'Shell Terminal Type={}, ' \
                     'Shell Terminal Width={}, ' \
                     'Shell Terminal Height={}, ' \
-                    'Shell CLI Type={}, ' \
-                    'Shell Timeout={}, ' \
-                    'Shell Receive Number of Bytes={})>'
+                    'Shell Receive Number of Bytes={}, ' \
+                    'Shell Timeout={})>'
         return repr_text.format(
             self.__class__.__name__,
             self.hostname,
@@ -559,8 +568,8 @@ class NetDevSshShell:
             self.shell_terminal_type,
             self.shell_receive_number_of_bytes.shell_terminal_width,
             self.shell_receive_number_of_bytes.shell_terminal_height,
-            self.shell_timeout,
-            self.shell_receive_number_of_bytes
+            self.shell_receive_number_of_bytes,
+            self.shell_timeout
         )
 
     def __enter__(self):
