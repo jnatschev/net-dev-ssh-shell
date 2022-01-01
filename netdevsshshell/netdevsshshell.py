@@ -51,6 +51,7 @@ netdevsshshell depends on paramiko and regex.
   the use of POSIX regular expression character classes.
   https://github.com/mrabarnett/mrab-regex
 """
+from __future__ import annotations
 from time import sleep
 import ipaddress
 import socket
