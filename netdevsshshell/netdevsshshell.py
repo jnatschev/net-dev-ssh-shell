@@ -89,7 +89,22 @@ class ShellTimeoutError(TimeoutError):
 
 
 class ShellReceiveNumberOfBytes(int):
+    """
+    ShellReceiveNumberOfBytes Object Definition
+    
+    `ShellReceiveNumberOfBytes` is a subclass of type `int`
+    """
     def __new__(cls, shell_terminal_width=132, shell_terminal_height=30):
+        """
+        
+        :param shell_terminal_width:
+            `int` object representing a shell's terminal width.
+            Default: 132
+            
+        :param shell_terminal_height:
+            `int` object representing a shell's terminal height.
+            Default: 30
+        """
         cls.shell_terminal_width = shell_terminal_width
         cls.shell_terminal_height = shell_terminal_height
         return super(ShellReceiveNumberOfBytes, cls).__new__(
@@ -102,26 +117,30 @@ class NetDevSshShell:
     """
     NetDevSshShell Object Definition
     """
-    ShellPromptPattern = '[\r\n]' \
-                         '[' \
-                         '[:alnum:]{1,}' \
-                         '[:punct:]{1,}' \
-                         '[:blank:]{0,}' \
-                         ']{1,50}?' \
-                         '[#$%>]{1}' \
-                         '[[:blank:]]{0,1}' \
-                         '$'
+    ShellPromptPattern: str = '[\r\n]' \
+                              '[' \
+                              '[:alnum:]{1,}' \
+                              '[:punct:]{1,}' \
+                              '[:blank:]{0,}' \
+                              ']{1,50}?' \
+                              '[#$%>]{1}' \
+                              '[[:blank:]]{0,1}' \
+                              '$'
     
-    def __init__(self, hostname: str | ipaddress.IPv4Address |
-                 ipaddress.IPv6Address,
-                 username: str, password: str,
-                 port: int = 22, shell_terminal_type: str = 'xterm',
+    def __init__(self,
+                 hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address,
+                 username: str,
+                 password: str,
+                 port: int = 22,
+                 shell_terminal_type: str = 'xterm',
                  shell_terminal_width: int = 132,
                  shell_terminal_height: int = 30,
                  shell_timeout: float | int = 15.0,
-                 shell_prompt_pattern=ShellPromptPattern,
-                 no_pagination_command=None, jump_hostname=None,
-                 jump_username=None, jump_password=None) -> None:
+                 shell_prompt_pattern: str = ShellPromptPattern,
+                 no_pagination_command: str | None = None,
+                 jump_hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address | None = None,
+                 jump_username: str | None = None,
+                 jump_password: str | None = None) -> None:
         """
         `NetDevSshShell` instance initialisation method
         
@@ -277,10 +296,9 @@ class NetDevSshShell:
 
     def _set_jump_channel(
             self,
-            jump_hostname,
-            jump_username,
-            jump_password
-    ) -> None:
+            jump_hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address,
+            jump_username: str,
+            jump_password: str) -> None:
         """
         If values for jump_hostname and jump_username and jump_password were
         supplied, then set the jump channel.
@@ -319,7 +337,7 @@ class NetDevSshShell:
         return self._shell.closed
 
     @staticmethod
-    def _remove_ansi_escape_sequences(string_as_bytes) -> bytes:
+    def _remove_ansi_escape_sequences(string_as_bytes: bytes) -> bytes:
         """
         Remove ANSI Escape characters.
 
@@ -404,11 +422,11 @@ class NetDevSshShell:
             `ShellSendError`
             `ShellClosedError`
         """
-        send_sleep_time = 0.17
-        command_to_send = '{}\r'.format(command)
-        command_to_send_length = len(command_to_send)
-        original_shell_timeout = self._shell.gettimeout()
-        new_shell_timeout = command_to_send_length * send_sleep_time + 5.0
+        send_sleep_time: float = 0.17
+        command_to_send: str = '{}\r'.format(command)
+        command_to_send_length: int = len(command_to_send)
+        original_shell_timeout: float | int = self._shell.gettimeout()
+        new_shell_timeout: float | int = command_to_send_length * send_sleep_time + 5.0
 
         self._shell.settimeout(new_shell_timeout)
 
@@ -423,7 +441,7 @@ class NetDevSshShell:
                     )
                 ) from socket_timeout
         else:
-            error_text = 'SHELL CLOSED ERROR: Unable to send command,' \
+            error_text: str = 'SHELL CLOSED ERROR: Unable to send command,' \
                          '`{}`, to remote SSH server because the shell is ' \
                          'closed.'.format(command)
             raise ShellClosedError(error_text)
@@ -446,13 +464,13 @@ class NetDevSshShell:
             `ShellClosedError`
             `ShellTimeoutError`
         """
-        timeout_values = (-1, -1.0, 90, 90.0, 0, 0.0)
-        original_shell_timeout = self.shell_timeout
+        timeout_values: tuple = (-1, -1.0, 90, 90.0, 0, 0.0)
+        original_shell_timeout: float | int = self.shell_timeout
 
         if timeout not in timeout_values:
             self._shell.settimeout(timeout)
 
-        received_bytes = ''.encode()
+        received_bytes: bytes = ''.encode()
 
         while not self.shell_prompt_regexp.search(
             self._remove_ansi_escape_sequences(received_bytes)
@@ -464,7 +482,7 @@ class NetDevSshShell:
                 if not self._shell.recv_ready():
                     sleep(1.0)
             except socket.timeout as socket_timeout:
-                error_text = 'SHELL TIMEOUT ERROR: shell prompt pattern ' \
+                error_text: str = 'SHELL TIMEOUT ERROR: shell prompt pattern ' \
                              'not received before timeout {}'.format(timeout)
                 raise ShellTimeoutError(error_text) from socket_timeout
 
@@ -531,8 +549,8 @@ class NetDevSshShell:
 
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
 
-        source = ('127.0.0.1', 22)
-        destination = (destination, 22)
+        source: tuple = ('127.0.0.1', 22)
+        destination: tuple = (destination, 22)
 
         client.connect(
             jump_hostname,
@@ -542,8 +560,8 @@ class NetDevSshShell:
             look_for_keys=False
         )
 
-        transport = client.get_transport()
-        channel = transport.open_channel(
+        transport: paramiko.transport.Transport = client.get_transport()
+        channel: paramiko.channel.Channel = transport.open_channel(
             'direct-tcpip',
             dest_addr=destination,
             src_addr=source
@@ -555,13 +573,13 @@ class NetDevSshShell:
         return self.shell_transcript
 
     def __repr__(self):
-        repr_text = '<{}(Hostname={}, ' \
-                    'Port Number={}, ' \
-                    'Shell Terminal Type={}, ' \
-                    'Shell Terminal Width={}, ' \
-                    'Shell Terminal Height={}, ' \
-                    'Shell Receive Number of Bytes={}, ' \
-                    'Shell Timeout={})>'
+        repr_text: str = '<{}(Hostname={}, ' \
+                         'Port Number={}, ' \
+                         'Shell Terminal Type={}, ' \
+                         'Shell Terminal Width={}, ' \
+                         'Shell Terminal Height={}, ' \
+                         'Shell Receive Number of Bytes={}, ' \
+                         'Shell Timeout={})>'
         return repr_text.format(
             self.__class__.__name__,
             self.hostname,
