@@ -118,7 +118,7 @@ class NetDevSshShell:
                  port: int = 22, shell_terminal_type: str = 'xterm',
                  shell_terminal_width: int = 132,
                  shell_terminal_height: int = 30,
-                 shell_timeout: float = 15.0,
+                 shell_timeout: int | float = 15.0,
                  shell_prompt_pattern=ShellPromptPattern,
                  no_pagination_command=None, jump_hostname=None,
                  jump_username=None, jump_password=None) -> None:
