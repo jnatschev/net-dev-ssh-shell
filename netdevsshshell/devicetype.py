@@ -55,15 +55,30 @@ from __future__ import annotations
 import regex as re
 
 
-class BaseDeviceType:
+class DeviceTypeBase:
     """
     Base Device Type Class
     """
-    no_pagination_command: str | None = None
-    shell_prompt_pattern: str | None = None
+    no_pagination_command: str = ''
+    shell_prompt_pattern: bytes = br''
+    shell_prompt_regexp: re.Regex = re.compile(
+        shell_prompt_pattern,
+        flags=re.VERSION1 | re.VERBOSE
+    )
+
+    def __repr__(self):
+        repr_text = '<{}(no_pagination_command={}, ' \
+                    'shell_prompt_pattern={}, ' \
+                    'shell_prompt_regexp={})>'
+        return repr_text.format(
+            self.__class__.__name__,
+            self.no_pagination_command,
+            self.shell_prompt_pattern,
+            self.shell_prompt_regexp
+        )
 
 
-class DeviceTypeNix(BaseDeviceType):
+class DeviceTypeNix(DeviceTypeBase):
     """
     Linux/Unix Device Type Class
     """
@@ -88,7 +103,7 @@ class DeviceTypeNix(BaseDeviceType):
     )
 
 
-class DeviceTypeIos(BaseDeviceType):
+class DeviceTypeIos(DeviceTypeBase):
     """
     Cisco IOS-like Device Type Class
     """
@@ -111,7 +126,7 @@ class DeviceTypeIos(BaseDeviceType):
     )
 
 
-class DeviceTypeJunos(BaseDeviceType):
+class DeviceTypeJunos(DeviceTypeBase):
     """
     Juniper JunOS-like Device Type Class
     """
