@@ -38,7 +38,7 @@ The idea behind the creation of this program is
   - use a secure shell jump host to reach the target ssh server. The equivalent
     of the OpenSSH -J option.
 - change management governance:
-  all ssh shell output is stored in an attribute. The ssh shell output may then
+  All ssh shell output is stored in an attribute. The ssh shell output may then
   be written to a file and this file may be added to a change record as a
   transcript of the ssh shell session, demonstrating adherence to a change
   record implementation plan.
@@ -51,29 +51,84 @@ netdevsshshell depends on paramiko and regex.
   the use of POSIX regular expression character classes.
   https://github.com/mrabarnett/mrab-regex
 """
-import paramiko
+from __future__ import annotations
 import regex as re
-from .devicetype import DeviceTypeNix, DeviceTypeIos, DeviceTypeJunos
-from .netdevsshshell import (
-    NetDevSshShell, ShellCliTypeError, ShellClosedError,
-    ShellSendError, ShellTimeoutError
-)
 
-__all__ = [
-    'paramiko',
-    're',
-    'DeviceTypeNix',
-    'DeviceTypeIos',
-    'DeviceTypeJunos',
-    'NetDevSshShell',
-    'ShellCliTypeError',
-    'ShellClosedError',
-    'ShellSendError',
-    'ShellTimeoutError',
-]
 
-__version_info__ = (2, 0, 0)
-__version__ = '{}.{}.{}'.format(*__version_info__)
-__author__ = 'John Natschev <jnatschev@icloud.com>'
-__copying__ = 'LGPL-3.0-or-later'
-__license__ = __copying__
+class BaseDeviceType:
+    """
+    Base Device Type Class
+    """
+    no_pagination_command: str | None = None
+    shell_prompt_pattern: str | None = None
+
+
+class DeviceTypeNix(BaseDeviceType):
+    """
+    Linux/Unix Device Type Class
+    """
+    shell_prompt_pattern = br'''
+        [\r\n]
+        [
+            [~]{0,1}
+            [@]{0,1}
+            [:]{0,1}
+            [:blank:]{0,}
+            [-]{0,}
+            [/]{0,}
+            [:alnum:]{1,}
+        ]{0,50}
+        [#$%]
+        [[:blank:]]{0,1}
+        $
+    '''
+    shell_prompt_regexp = re.compile(
+        shell_prompt_pattern,
+        flags=re.VERSION1 | re.VERBOSE
+    )
+
+
+class DeviceTypeIos(BaseDeviceType):
+    """
+    Cisco IOS-like Device Type Class
+    """
+    no_pagination_command = 'terminal length 0'
+    shell_prompt_pattern = br'''
+        [\r\n]
+        [
+            [-]{0,}
+            [(]{0,1}
+            [)]{0,1}
+            [:alnum:]{1,}
+        ]{1,50}
+        [#>]
+        [[:blank:]]{0,1}
+        $
+    '''
+    shell_prompt_regexp = re.compile(
+        shell_prompt_pattern,
+        flags=re.VERSION1 | re.VERBOSE
+    )
+
+
+class DeviceTypeJunos(BaseDeviceType):
+    """
+    Juniper JunOS-like Device Type Class
+    """
+    no_pagination_command = 'set cli screen-length 0'
+    shell_prompt_pattern = br'''
+        [\r\n]
+        ['
+            [:blank:]{0,}
+            [@]{0,1}
+            [-]{0,}
+            [:alnum:]{1,}
+        ]{0,50}
+        [#$>]
+        [[:blank:]]{0,1}
+        $
+    '''
+    shell_prompt_regexp = re.compile(
+        shell_prompt_pattern,
+        flags=re.VERSION1 | re.VERBOSE
+    )

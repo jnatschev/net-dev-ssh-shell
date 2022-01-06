@@ -29,16 +29,16 @@ the full output of an executed command.
 
 The idea behind the creation of this program is
 - simplicity of use:
-  in essence, a secure shell client replacement. This program does provide minor
+  In essence, a secure shell client replacement. This program does provide minor
   enhancements to enable users of this program to:
-  - preset the shell prompt regualar expression;
+  - preset the shell prompt regular expression;
     regex is used as the regular expression engine to enable the use of POSIX
     character classes.
   - execute a network device "no pagination" command;
   - use a secure shell jump host to reach the target ssh server. The equivalent
     of the OpenSSH -J option.
 - change management governance:
-  all ssh shell output is stored in an attribute. The ssh shell output may then
+  All ssh shell output is stored in an attribute. The ssh shell output may then
   be written to a file and this file may be added to a change record as a
   transcript of the ssh shell session, demonstrating adherence to a change
   record implementation plan.
@@ -47,7 +47,7 @@ netdevsshshell depends on paramiko and regex.
 - Paramiko provides netdevsshshell the ssh shell capability.
   https://paramiko.org
 
-- Regex provides alternative regular expression processing capability. Namely
+- Regex provides alternative regular expression processing capability. Namely,
   the use of POSIX regular expression character classes.
   https://github.com/mrabarnett/mrab-regex
 """
@@ -57,6 +57,7 @@ import ipaddress
 import socket
 import paramiko
 import regex as re
+from .devicetype import DeviceTypeIos, DeviceTypeJunos, DeviceTypeNix
 
 
 class ShellCliTypeError(ValueError):
@@ -117,42 +118,6 @@ class NetDevSshShell:
     """
     NetDevSshShell Object Definition
     """
-    shell_prompt_pattern: dict = {
-        'nix': '[\r\n]'
-               '['
-               '[:blank:]{0,}'
-               '[~]{0,1}'
-               '[@]{0,1}'
-               '[:]{0,1}'
-               '[-]{0,}'
-               '[/]{0,}'
-               '[:alnum:]{1,}'
-               ']{0,50}'
-               '[#$%]'
-               '[[:blank:]]{0,1}'
-               '$',
-        'ios': '[\r\n]'
-               '['
-               '[-]{0,}'
-               '[(]{0,1}'
-               '[)]{0,1}'
-               '[:alnum:]{1,}'
-               ']{1,50}'
-               '[#>]'
-               '[[:blank:]]{0,1}'
-               '$',
-        'junos': '[\r\n]'
-                 '['
-                 '[:blank:]{0,}'
-                 '[@]{0,1}'
-                 '[-]{0,}'
-                 '[:alnum:]{1,}'
-                 ']{0,50}'
-                 '[#$>]'
-                 '[[:blank:]]{0,1}'
-                 '$'
-    }
-
     def __init__(self,
                  hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address,
                  username: str,
@@ -163,7 +128,6 @@ class NetDevSshShell:
                  shell_terminal_width: int = 132,
                  shell_terminal_height: int = 30,
                  shell_timeout: float | int = 5.0,
-                 no_pagination_command: str | None = None,
                  jump_hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address | None = None,
                  jump_username: str | None = None,
                  jump_password: str | None = None) -> None:
@@ -213,15 +177,6 @@ class NetDevSshShell:
             `float` or `int` object representing a shell timeout in seconds.
             Default: 15.0
 
-        :param no_pagination_command:
-            `str` object representing a command to be used to turn shell
-            pagination off. Examples of such a command are:
-            - Cisco-like network devices:
-              'terminal length 0'
-            - Juniper JunOS network devices:
-              'set cli screen-length 0'
-            Default: None
-
         :param jump_hostname:
             `str` object representing the hostname or IP Address of a jump ssh
             server used to get to the target ssh server. Equivalent to OpenSSH
@@ -243,15 +198,9 @@ class NetDevSshShell:
         self.port: int = port
         self.username: str = username
         self.password: str = password
-
-        self.device_type: str = device_type
-
-        self.shell_prompt_regexp = re.compile(
-            self.shell_prompt_pattern[self.device_type].encode(
-                'unicode_escape'
-            ),
-            flags=re.VERSION1
-        )
+        self.device_type = globals()[
+            'DeviceType' + device_type.lower().capitalize()
+        ]()
         self.shell_terminal_type: str = shell_terminal_type
         self.shell_receive_number_of_bytes = ShellReceiveNumberOfBytes(
             shell_terminal_width=shell_terminal_width,
@@ -272,11 +221,14 @@ class NetDevSshShell:
 
         self._shell.settimeout(self.shell_timeout)
         self.shell_receive()
-        self._shell_execute_no_pagination_command(no_pagination_command)
+        self._shell_execute_no_pagination_command(
+            self.device_type.no_pagination_command
+        )
 
-    def _shell_execute_no_pagination_command(self,
-                                             no_pagination_command: str
-                                             ) -> None:
+    def _shell_execute_no_pagination_command(
+            self,
+            no_pagination_command: str
+    ) -> None:
         """
 
         :param no_pagination_command:
@@ -410,7 +362,7 @@ class NetDevSshShell:
         '''
         escape_sequence_regexp = re.compile(
             ansi_escape_pattern,
-            flags=re.VERBOSE | re.VERSION0
+            flags=re.VERSION1 | re.VERBOSE
         )
         return escape_sequence_regexp.sub(b'', string_as_bytes)
 
@@ -498,7 +450,7 @@ class NetDevSshShell:
 
         received_bytes: bytes = ''.encode()
 
-        while not self.shell_prompt_regexp.search(
+        while not self.device_type.shell_prompt_regexp.search(
             self._remove_ansi_escape_sequences(received_bytes)
         ):
             try:
