@@ -57,8 +57,9 @@ import regex as re
 
 class DeviceTypeBase:
     """
-    Base Device Type Class
+    Device Type Base Class
     """
+    set_shell_prompt_command: str = ''
     no_pagination_command: str = ''
     shell_prompt_pattern: bytes = br''
     shell_prompt_regexp: re.Regex = re.compile(
@@ -67,11 +68,13 @@ class DeviceTypeBase:
     )
 
     def __repr__(self):
-        repr_text = '<{}(no_pagination_command={}, ' \
+        repr_text = '<{}(set_shell_prompt_command={}, ' \
+                    'no_pagination_command={}, ' \
                     'shell_prompt_pattern={}, ' \
                     'shell_prompt_regexp={})>'
         return repr_text.format(
             self.__class__.__name__,
+            self.set_shell_prompt_command,
             self.no_pagination_command,
             self.shell_prompt_pattern,
             self.shell_prompt_regexp
@@ -82,24 +85,23 @@ class DeviceTypeNix(DeviceTypeBase):
     """
     Linux/Unix Device Type Class
     """
-    shell_prompt_pattern = br'''
-        [\r\n]
-        [
-            [~]{0,1}
-            [@]{0,1}
-            [:]{0,1}
-            [:blank:]{0,}
-            [-]{0,}
-            [/]{0,}
-            [:alnum:]{1,}
-        ]{0,50}
-        [#$%]
-        [[:blank:]]{0,1}
-        $
-    '''
+    set_shell_prompt_command = "export PS1='shellprompt$ '"
+    shell_prompt_pattern = '[\r\n]' \
+                           '[' \
+                           '[~]{0,1}' \
+                           '[@]{0,1}' \
+                           '[:]{0,1}' \
+                           '[:blank:]{0,}' \
+                           '[-]{0,}' \
+                           '[/]{0,}' \
+                           '[:alnum:]{1,}' \
+                           ']{0,50}' \
+                           '[#$%]' \
+                           '[[:blank:]]{0,1}' \
+                           '$'
     shell_prompt_regexp = re.compile(
-        shell_prompt_pattern,
-        flags=re.VERSION1 | re.VERBOSE
+        shell_prompt_pattern.encode('unicode_escape'),
+        flags=re.VERSION1
     )
 
 
@@ -108,21 +110,19 @@ class DeviceTypeIos(DeviceTypeBase):
     Cisco IOS-like Device Type Class
     """
     no_pagination_command = 'terminal length 0'
-    shell_prompt_pattern = br'''
-        [\r\n]
-        [
-            [-]{0,}
-            [(]{0,1}
-            [)]{0,1}
-            [:alnum:]{1,}
-        ]{1,50}
-        [#>]
-        [[:blank:]]{0,1}
-        $
-    '''
+    shell_prompt_pattern = '[\r\n]' \
+                           '[' \
+                           '[-]{0,}' \
+                           '[(]{0,1}' \
+                           '[)]{0,1}' \
+                           '[:alnum:]{1,}' \
+                           ']{1,50}' \
+                           '[#]' \
+                           '[[:blank:]]{0,1}' \
+                           '$'
     shell_prompt_regexp = re.compile(
-        shell_prompt_pattern,
-        flags=re.VERSION1 | re.VERBOSE
+        shell_prompt_pattern.encode('unicode_escape'),
+        flags=re.VERSION1
     )
 
 
@@ -130,20 +130,28 @@ class DeviceTypeJunos(DeviceTypeBase):
     """
     Juniper JunOS-like Device Type Class
     """
+    set_shell_prompt_command = 'set cli prompt "shellprompt> "'
     no_pagination_command = 'set cli screen-length 0'
-    shell_prompt_pattern = br'''
-        [\r\n]
-        ['
-            [:blank:]{0,}
-            [@]{0,1}
-            [-]{0,}
-            [:alnum:]{1,}
-        ]{0,50}
-        [#$>]
-        [[:blank:]]{0,1}
-        $
-    '''
+    shell_prompt_pattern = '[\r\n]' \
+                           'shellprompt' \
+                           '[>#]' \
+                           '[[:blank:]]{0,1}' \
+                           '$' \
+                           '|' \
+                           '[\r\n]' \
+                           '[' \
+                           '[~]{0,1}' \
+                           '[@]{0,1}' \
+                           '[:]{0,1}' \
+                           '[:blank:]{0,}' \
+                           '[-]{0,}' \
+                           '[/]{0,}' \
+                           '[:alnum:]{1,}' \
+                           ']{0,50}' \
+                           '[$]' \
+                           '[[:blank:]]{0,1}' \
+                           '$'
     shell_prompt_regexp = re.compile(
-        shell_prompt_pattern,
-        flags=re.VERSION1 | re.VERBOSE
+        shell_prompt_pattern.encode('unicode_escape'),
+        flags=re.VERSION1
     )
