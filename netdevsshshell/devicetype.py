@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
-# netdevsshshell: a python interactive ssh shell depending on paramiko for the
-# ssh shell and regex for determining the ssh shell prompt signifying the end
-# of the full output of an executed command.
+# netdevsshshell: a python ssh interactive shell.
 # Copyright (C) 2021 John Natschev <jnatschev@icloud.com>
 #
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or (at your option) any
-# later version.
+# This file is part of netdevsshshell. netdevsshshell is free software:
+# you can redistribute it and / or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3
+# of the License, or (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
+# netdevsshshell is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-# details.
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public License along
-# with this program.  If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# netdevsshshell.If not, see < https:// www.gnu.org / licenses / >.
 #
 # paramiko:
 # see https://github.com/paramiko/paramiko/blob/main/LICENSE
@@ -23,7 +20,7 @@
 # see https://github.com/mrabarnett/mrab-regex/blob/hg/LICENSE.txt
 #
 """
-netdevsshshell is a python interactive ssh shell depending on paramiko for the
+netdevsshshell is a python ssh interactive shell depending on paramiko for the
 ssh shell and regex for determining the ssh shell prompt signifying the end of
 the full output of an executed command.
 
