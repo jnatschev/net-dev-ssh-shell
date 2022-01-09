@@ -9,10 +9,10 @@ The two test files are used in a Docker container running in a GNS3
 
 The two test files run through a set of conda/mamba environments. The
 conda/mamba environments are:
-python>=3.7,<3.8
-python>=3.8,<3.9
-python>=3.9,<3.10
-python>=3.10,<3.11
+- python>=3.7,<3.8
+- python>=3.8,<3.9
+- python>=3.9,<3.10
+- python>=3.10,<3.11
 
 Each conda/mamba environment satisfies the netdevsshshell dependencies.
 
