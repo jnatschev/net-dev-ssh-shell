@@ -50,11 +50,11 @@ netdevsshshell depends on paramiko and regex.
 """
 import paramiko
 import regex as re
-from .devicetype import DeviceTypeNix, DeviceTypeIos, DeviceTypeJunos
-from .netdevsshshell import (
-    NetDevSshShell, ShellCliTypeError, ShellClosedError,
-    ShellSendError, ShellTimeoutError
-)
+
+from .devicetype import DeviceTypeIos, DeviceTypeJunos, DeviceTypeNix
+from .netdevsshshell import (NetDevSshShell, ShellCliTypeError,
+                             ShellClosedError, ShellSendError,
+                             ShellTimeoutError)
 
 __all__ = [
     'paramiko',

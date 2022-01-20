@@ -49,11 +49,14 @@ netdevsshshell depends on paramiko and regex.
   https://github.com/mrabarnett/mrab-regex
 """
 from __future__ import annotations
-from time import sleep
+
 import ipaddress
 import socket
+from time import sleep
+
 import paramiko
 import regex as re
+
 from .devicetype import DeviceTypeIos, DeviceTypeJunos, DeviceTypeNix
 
 
@@ -134,19 +137,24 @@ class NetDevSshShell:
         `NetDevSshShell` instance initialisation method
         
         :param hostname:
-            `str` object representing the target ssh server hostname or IP
-            Address.
+            Object representing the target ssh server hostname or IP Address.
+        :type hostname:
+            `str` | `ipaddress.IPv4Address` | `ipaddress.IPv6Address`
 
         :param username:
-            `str` object representing the username to authenticate to the target
+            Object representing the username to authenticate to the target
             ssh server.
+        :type username:
+            `str`
 
         :param password:
-            `str` object representing the password of the username to
-            authenticate to the target ssh server.
+            Object representing the password of the username to authenticate to
+            the target ssh server.
+        :type password:
+            `str`
 
         :param device_type:
-            `str` object representing the target device type.
+            Object representing the target device type.
             Possible values:
             - 'nix'
               for Linux/Unix-like devices
@@ -154,43 +162,64 @@ class NetDevSshShell:
               for Cisco IOS-like devices
             - 'junos'
               for Juniper JunOS-like devices
+        :type device_type:
+            `str`
 
         :param port:
-            `int` object representing the port number of the target ssh server.
+            Object representing the port number of the target ssh server.
+        :type port:
+            `int`
 
         :param shell_terminal_type:
-            `str` object representing the shell terminal type. For example:
+            Object representing the shell terminal type. For example:
             - vt100
             - xterm (default)
             - xterm-256color
+        :type shell_terminal_type:
+            `str`
 
         :param shell_terminal_width:
-            `int` object representing the shell terminal width.
+            Object representing the shell terminal width.
             Default: 132
+        :type shell_terminal_width:
+            `int`
 
         :param shell_terminal_height:
-            `int` object representing the shell terminal height.
+            Object representing the shell terminal height.
             Default: 30
+        :type shell_terminal_height:
+            `int`
 
         :param shell_timeout:
-            `float` or `int` object representing a shell timeout in seconds.
-            Default: 15.0
+            Object representing a shell timeout in seconds. This is the timeout
+            value waiting for data during the
+            <instace>._shell.recv(`number_of_bytes`) process defined in the
+            <instance>.shell_receive() method.
+            Default: 5.0
+        :type shell_timeout:
+            `float` | `int`
 
         :param jump_hostname:
-            `str` object representing the hostname or IP Address of a jump ssh
+            Object representing the hostname or IP Address of a jump ssh
             server used to get to the target ssh server. Equivalent to OpenSSH
             option -J.
             Default: None
+        :type jump_hostname:
+            `str` | `ipaddress.IPv4Address` | `ipaddress.IPv6Address`
 
         :param jump_username:
-            `str` object representing the username to authenticate to the jump
-            ssh host.
+            Object representing the username to authenticate to the jump ssh
+            host.
             Default: None
+        :type jump_username:
+            `str`
 
         :param jump_password:
-            `str` object representing the password of the username to
-            authenticate to the jump ssh host.
+            Object representing the password of the username to authenticate to
+            the jump ssh host.
             Default: None
+        :type jump_password:
+            `str`
         """
         super().__init__()
         self.hostname: str = str(hostname)
@@ -231,9 +260,12 @@ class NetDevSshShell:
         """
 
         :param no_pagination_command:
-            `str` object representing a no pagination command. That is, for
-            example, "terminal length 0" for Cisco IOS shell-like platforms or
+            Object representing a no pagination command. That is, for example,
+            "terminal length 0" for Cisco IOS shell-like platforms
+            or
             "set cli screen-length 0" for Juniper JunOS shell-like platforms.
+        :type no_pagination_command:
+            `str`
 
         :returns:
             `NoneType`
@@ -269,7 +301,7 @@ class NetDevSshShell:
 
     def _ssh_client_connect(self) -> None:
         """
-        Perform a paramiko.SSHClient object connect.
+        Perform a paramiko.SSHClient instance connect.
 
         :returns:
             `NoneType`
@@ -294,15 +326,21 @@ class NetDevSshShell:
         supplied, then set the jump channel.
 
         :param jump_hostname:
-            `str` object representing the jump ssh server hostname
+            Object representing the jump ssh server hostname
+        :type jump_hostname:
+            `str`
 
         :param jump_username:
-            `str` object representing the jump ssh server username to
-            authenticate with.
+            Object representing the jump ssh server username to authenticate
+            with.
+        :type jump_username:
+            `str`
 
         :param jump_password:
-            `str` object representing the jump ssh server username password to
+            Object representing the jump ssh server username password to
             authenticate with.
+        :type jump_password:
+            `str`
 
         :returns:
             `NoneType`
@@ -321,8 +359,10 @@ class NetDevSshShell:
         Remove ANSI Escape characters.
 
         :param string_as_bytes:
-            `bytes` object representing the string to have ANSI Escape
-            characters removed.
+            Object representing the string to have ANSI escape characters
+            removed.
+        :type string_as_bytes:
+            `bytes`
 
         :returns:
             `bytes`
@@ -365,7 +405,13 @@ class NetDevSshShell:
         return escape_sequence_regexp.sub(b'', string_as_bytes)
 
     @property
-    def shell_timeout(self):
+    def shell_timeout(self) -> float | int:
+        """
+        The configured `<instance>._shell.timeout value.
+
+        :returns:
+            `float` or `int`
+        """
         return self._shell.gettimeout()
 
     @property
@@ -405,8 +451,9 @@ class NetDevSshShell:
         Send a command to the connected SSH server for execution.
 
         :param command:
-                `str` object representing the command to be sent to the SSH
-                server.
+            Object representing the command to be sent to the SSH server.
+        :type command:
+            `str`
 
         :returns:
             `NoneType`
@@ -449,8 +496,11 @@ class NetDevSshShell:
         Receive the output of a command executed on the SSH server.
 
         :param timeout:
-            `float` or `int` object representing the period to wait for the
-            shell prompt before a socket.timeout is raised
+            Object representing a time period, in seconds, to wait, during
+            `<instance>._shell.recv(`<number_of_bytes>`)`, before a
+            `socket.timeout` error is raised.
+        :type timeout:
+            `float` | `int` | `NoneType`
 
         :returns:
             `NoneType`
@@ -499,9 +549,13 @@ class NetDevSshShell:
 
         :param command:
             see `shell_send()` docstring
+        :type command:
+            `str`
 
         :param timeout:
             see `shell_received()` docstring
+        :type timeout:
+            `float` | `int` | `NoneType`
 
         :returns:
             `NoneType`
@@ -524,20 +578,28 @@ class NetDevSshShell:
         server.
 
         :param destination:
-            `str` object representing the hostname or IP Address of the target
-            SSH server
+            Object representing the hostname or IP Address of the target SSH
+            server.
+        :type destination:
+            `str`
 
         :param jump_hostname:
-            `str` object representing the hostname or IP Address of the SSH
-            server to be used as the jump host.
+            Object representing the hostname or IP Address of the SSH server to
+            be used as the jump host.
+        :type jump_hostname:
+            `str`
 
         :param jump_username:
-            `str` object representing the username used to authenticate to the
-            SSH server to be used as the jump host.
+            Object representing the username used to authenticate to the SSH
+            server to be used as the jump host.
+        :type jump_username:
+            `str`
 
         :param jump_password:
-            `str` object representing the password of the username used to
+            Object representing the password of the username used to
             authenticate to the SSH server to be used as the jump host.
+        :type jump_password:
+            `str`
 
         :returns:
             `paramiko.channel.Channel` object

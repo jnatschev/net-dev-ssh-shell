@@ -49,6 +49,7 @@ netdevsshshell depends on paramiko and regex.
   https://github.com/mrabarnett/mrab-regex
 """
 from __future__ import annotations
+
 import regex as re
 
 
@@ -64,11 +65,11 @@ class DeviceTypeBase:
         flags=re.VERSION1 | re.VERBOSE
     )
 
-    def __repr__(self):
-        repr_text = '<{}(set_shell_prompt_command={}, ' \
-                    'no_pagination_command={}, ' \
-                    'shell_prompt_pattern={}, ' \
-                    'shell_prompt_regexp={})>'
+    def __repr__(self) -> str:
+        repr_text: str = '<{}(set_shell_prompt_command={}, ' \
+                         'no_pagination_command={}, ' \
+                         'shell_prompt_pattern={}, ' \
+                         'shell_prompt_regexp={})>'
         return repr_text.format(
             self.__class__.__name__,
             self.set_shell_prompt_command,
@@ -82,21 +83,21 @@ class DeviceTypeNix(DeviceTypeBase):
     """
     Linux/Unix Device Type Class
     """
-    set_shell_prompt_command = "export PS1='shellprompt$ '"
-    shell_prompt_pattern = '[\r\n]' \
-                           '[' \
-                           '[~]{0,1}' \
-                           '[@]{0,1}' \
-                           '[:]{0,1}' \
-                           '[:blank:]{0,}' \
-                           '[-]{0,}' \
-                           '[/]{0,}' \
-                           '[:alnum:]{1,}' \
-                           ']{0,50}' \
-                           '[#$%]' \
-                           '[[:blank:]]{0,1}' \
-                           '$'
-    shell_prompt_regexp = re.compile(
+    set_shell_prompt_command: str = "export PS1='shellprompt$ '"
+    shell_prompt_pattern: str = '[\r\n]' \
+                                '[' \
+                                '[~]{0,1}' \
+                                '[@]{0,1}' \
+                                '[:]{0,1}' \
+                                '[:blank:]{0,}' \
+                                '[-]{0,}' \
+                                '[/]{0,}' \
+                                '[:alnum:]{1,}' \
+                                ']{0,50}' \
+                                '[#$%]' \
+                                '[[:blank:]]{0,1}' \
+                                '$'
+    shell_prompt_regexp: re.Regex = re.compile(
         shell_prompt_pattern.encode('unicode_escape'),
         flags=re.VERSION1
     )
@@ -106,18 +107,18 @@ class DeviceTypeIos(DeviceTypeBase):
     """
     Cisco IOS-like Device Type Class
     """
-    no_pagination_command = 'terminal length 0'
-    shell_prompt_pattern = '[\r\n]' \
-                           '[' \
-                           '[-]{0,}' \
-                           '[(]{0,1}' \
-                           '[)]{0,1}' \
-                           '[:alnum:]{1,}' \
-                           ']{1,50}' \
-                           '[#]' \
-                           '[[:blank:]]{0,1}' \
-                           '$'
-    shell_prompt_regexp = re.compile(
+    no_pagination_command: str = 'terminal length 0'
+    shell_prompt_pattern: str = '[\r\n]' \
+                                '[' \
+                                '[-]{0,}' \
+                                '[(]{0,1}' \
+                                '[)]{0,1}' \
+                                '[:alnum:]{1,}' \
+                                ']{1,50}' \
+                                '[#]' \
+                                '[[:blank:]]{0,1}' \
+                                '$'
+    shell_prompt_regexp: re.Regex = re.compile(
         shell_prompt_pattern.encode('unicode_escape'),
         flags=re.VERSION1
     )
@@ -127,28 +128,28 @@ class DeviceTypeJunos(DeviceTypeBase):
     """
     Juniper JunOS-like Device Type Class
     """
-    set_shell_prompt_command = 'set cli prompt "shellprompt> "'
-    no_pagination_command = 'set cli screen-length 0'
-    shell_prompt_pattern = '[\r\n]' \
-                           'shellprompt' \
-                           '[>#]' \
-                           '[[:blank:]]{0,1}' \
-                           '$' \
-                           '|' \
-                           '[\r\n]' \
-                           '[' \
-                           '[~]{0,1}' \
-                           '[@]{0,1}' \
-                           '[:]{0,1}' \
-                           '[:blank:]{0,}' \
-                           '[-]{0,}' \
-                           '[/]{0,}' \
-                           '[:alnum:]{1,}' \
-                           ']{0,50}' \
-                           '[$]' \
-                           '[[:blank:]]{0,1}' \
-                           '$'
-    shell_prompt_regexp = re.compile(
+    set_shell_prompt_command: str = 'set cli prompt "shellprompt> "'
+    no_pagination_command: str = 'set cli screen-length 0'
+    shell_prompt_pattern: str = '[\r\n]' \
+                                'shellprompt' \
+                                '[>#]' \
+                                '[[:blank:]]{0,1}' \
+                                '$' \
+                                '|' \
+                                '[\r\n]' \
+                                '[' \
+                                '[~]{0,1}' \
+                                '[@]{0,1}' \
+                                '[:]{0,1}' \
+                                '[:blank:]{0,}' \
+                                '[-]{0,}' \
+                                '[/]{0,}' \
+                                '[:alnum:]{1,}' \
+                                ']{0,50}' \
+                                '[$]' \
+                                '[[:blank:]]{0,1}' \
+                                '$'
+    shell_prompt_regexp: re.Regex = re.compile(
         shell_prompt_pattern.encode('unicode_escape'),
         flags=re.VERSION1
     )
