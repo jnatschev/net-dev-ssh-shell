@@ -20,13 +20,11 @@
 # see https://github.com/mrabarnett/mrab-regex/blob/hg/LICENSE.txt
 #
 """
-netdevsshshell is a python interactive ssh shell depending on paramiko for the
-ssh shell and regex for determining the ssh shell prompt signifying the end of
-the full output of an executed command.
+netdevsshshell is a python ssh interactive shell.
 
-The idea behind the creation of this program is
+The idea behind the creation of this program is:
 - simplicity of use:
-  In essence, a secure shell client replacement. This program does provide minor
+  in essence, a secure shell client replacement. This program does provide minor
   enhancements to enable users of this program to:
   - preset the shell prompt regular expression;
     regex is used as the regular expression engine to enable the use of POSIX
@@ -35,7 +33,7 @@ The idea behind the creation of this program is
   - use a secure shell jump host to reach the target ssh server. The equivalent
     of the OpenSSH -J option.
 - change management governance:
-  All ssh shell output is stored in an attribute. The ssh shell output may then
+  all ssh shell output is stored in an attribute. The ssh shell output may then
   be written to a file and this file may be added to a change record as a
   transcript of the ssh shell session, demonstrating adherence to a change
   record implementation plan.

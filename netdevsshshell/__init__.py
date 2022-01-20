@@ -20,11 +20,9 @@
 # see https://github.com/mrabarnett/mrab-regex/blob/hg/LICENSE.txt
 #
 """
-netdevsshshell is a python interactive ssh shell depending on paramiko for the
-ssh shell and regex for determining the ssh shell prompt signifying the end of
-the full output of an executed command.
+netdevsshshell is a python ssh interactive shell.
 
-The idea behind the creation of this program is
+The idea behind the creation of this program is:
 - simplicity of use:
   in essence, a secure shell client replacement. This program does provide minor
   enhancements to enable users of this program to:
