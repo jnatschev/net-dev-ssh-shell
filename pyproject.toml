@@ -4,15 +4,15 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "netdevsshshell"
+authors = [{name = "John Natschev", email = "jnatschev@icloud.com"}]
+maintainers = [{name = "John Natschev", email = "jnatschev@icloud.com"}]
 requires-python = ">=3.7,<3.11"
 dependencies = [
     "paramiko >=2.6",
     "regex >=2021.3.17"
 ]
-authors = [{name = "John Natschev", email = "jnatschev@icloud.com"}]
-maintainers = [{name = "John Natschev", email = "jnatschev@icloud.com"}]
 readme = "README.md"
-license = {file = "LICENSE.txt"}
+license = {file = "COPYING"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Information Technology",
@@ -30,7 +30,6 @@ classifiers = [
     "Topic :: System :: Shells"
 ]
 dynamic = ["version", "description"]
-
 
 [project.urls]
 Home = "https://github.com/jnatschev/net-dev-ssh-shell"
