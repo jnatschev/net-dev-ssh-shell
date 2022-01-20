@@ -72,5 +72,5 @@ __all__ = [
 __version_info__ = (2, 0, 0)
 __version__ = '{}.{}.{}'.format(*__version_info__)
 __author__ = 'John Natschev <jnatschev@icloud.com>'
-__copying__ = 'LGPL-3.0-or-later'
+__copying__ = 'GPL-3.0-or-later'
 __license__ = __copying__
