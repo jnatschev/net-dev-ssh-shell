@@ -1,4 +1,20 @@
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD
+# netdevsshshell: a python ssh interactive shell.
+# Copyright (C) 2021 John Natschev <jnatschev@icloud.com>
+#
+# This file is part of netdevsshshell. netdevsshshell is free software:
+# you can redistribute it and / or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation, either version 3
+# of the License, or (at your option) any later version.
+#
+# netdevsshshell is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# netdevsshshell.If not, see < https:// www.gnu.org / licenses / >.
+=======
 # netdevsshshell: a python ssh shell that uses paramiko and regex for accessing
 # the command-line shell of a network device; a network device such as a router
 # or switch.
@@ -16,6 +32,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program.  If not, see <https://www.gnu.org/licenses/>.
+>>>>>>> 2.0
 #
 # paramiko:
 # see https://github.com/paramiko/paramiko/blob/main/LICENSE
@@ -23,6 +40,35 @@
 # see https://github.com/mrabarnett/mrab-regex/blob/hg/LICENSE.txt
 #
 """
+<<<<<<< HEAD
+netdevsshshell is a python interactive ssh shell depending on paramiko for the
+ssh shell and regex for determining the ssh shell prompt signifying the end of
+the full output of an executed command.
+
+The idea behind the creation of this program is
+- simplicity of use:
+  In essence, a secure shell client replacement. This program does provide minor
+  enhancements to enable users of this program to:
+  - preset the shell prompt regular expression;
+    regex is used as the regular expression engine to enable the use of POSIX
+    character classes.
+  - execute a network device "no pagination" command;
+  - use a secure shell jump host to reach the target ssh server. The equivalent
+    of the OpenSSH -J option.
+- change management governance:
+  All ssh shell output is stored in an attribute. The ssh shell output may then
+  be written to a file and this file may be added to a change record as a
+  transcript of the ssh shell session, demonstrating adherence to a change
+  record implementation plan.
+
+netdevsshshell depends on paramiko and regex.
+- Paramiko provides netdevsshshell the ssh shell capability.
+  https://paramiko.org
+
+- Regex provides alternative regular expression processing capability. Namely,
+  the use of POSIX regular expression character classes.
+  https://github.com/mrabarnett/mrab-regex
+=======
 netdevsshshell is a python program with the intent that is a portable
 replacement for a an operating system dependent ssh client for accessing network
 devices with a command-line interface (CLI) "shell". For example:
@@ -62,19 +108,29 @@ netdevsshshell depends on paramiko and regex.
   the use of POSIX regular expression character classes.
   https://github.com/mrabarnett/mrab-regex
 
+>>>>>>> 2.0
 """
+from __future__ import annotations
+
+import ipaddress
+import socket
 from time import sleep
 
-import socket
 import paramiko
 import regex as re
+
+from .devicetype import DeviceTypeIos, DeviceTypeJunos, DeviceTypeNix
 
 
 class ShellCliTypeError(ValueError):
     """
     Used if the supplied `shell_cli_type` value is unsupported.
 
+<<<<<<< HEAD
+    `ShellCliTypeError` is a subclass of `ValueError`
+=======
     `ShellCliTypeError` is a sublass of `ValueError`
+>>>>>>> 2.0
     """
 
 
@@ -89,6 +145,18 @@ class ShellClosedError(EOFError):
 class ShellSendError(Exception):
     """
     Used during `<instance>.shell_send(<command>)`
+<<<<<<< HEAD
+
+    `ShellSendError` is a subclass of `Exception`
+=======
+    """
+
+
+class ShellTimeoutError(TimeoutError):
+    """
+    Used if a `<instance>.shell_send()` or `<instance>.shell_receive()`
+    encounter a shell socket.timeout error.
+>>>>>>> 2.0
     """
 
 
@@ -99,10 +167,50 @@ class ShellTimeoutError(TimeoutError):
     """
 
 
+class ShellReceiveNumberOfBytes(int):
+    """
+    ShellReceiveNumberOfBytes Object Definition
+    
+    `ShellReceiveNumberOfBytes` is a subclass of type `int`
+    """
+    def __new__(cls, shell_terminal_width=132, shell_terminal_height=30):
+        """
+        
+        :param shell_terminal_width:
+            `int` object representing a shell's terminal width.
+            Default: 132
+            
+        :param shell_terminal_height:
+            `int` object representing a shell's terminal height.
+            Default: 30
+        """
+        cls.shell_terminal_width = shell_terminal_width
+        cls.shell_terminal_height = shell_terminal_height
+        return super(ShellReceiveNumberOfBytes, cls).__new__(
+            cls,
+            shell_terminal_width * shell_terminal_height
+        )
+
+
 class NetDevSshShell:
     """
     NetDevSshShell Object Definition
     """
+<<<<<<< HEAD
+    def __init__(self,
+                 hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address,
+                 username: str,
+                 password: str,
+                 device_type: str,
+                 port: int = 22,
+                 shell_terminal_type: str = 'xterm',
+                 shell_terminal_width: int = 132,
+                 shell_terminal_height: int = 30,
+                 shell_timeout: float | int = 5.0,
+                 jump_hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address | None = None,
+                 jump_username: str | None = None,
+                 jump_password: str | None = None) -> None:
+=======
     shell_cli_types = (
         'auto',
         'cwlc',
@@ -136,25 +244,82 @@ class NetDevSshShell:
                  shell_terminal_height: int = 128, shell_cli_type: str = 'auto',
                  shell_timeout: float = 90.0, jump_hostname=None,
                  jump_username=None, jump_password=None) -> None:
+>>>>>>> 2.0
         """
-        `NetDevSshShell` initialisation
+        `NetDevSshShell` instance initialisation method
+        
+        :param hostname:
+            Object representing the target ssh server hostname or IP Address.
+        :type hostname:
+            `str` | `ipaddress.IPv4Address` | `ipaddress.IPv6Address`
 
-        Args:
-            hostname:
-                `str` object representing the hostname or IP Address of the
-                target SSH server.
+        :param username:
+            Object representing the username to authenticate to the target
+            ssh server.
+        :type username:
+            `str`
 
-            username:
-                `str` object representing the username used to authenticate to
-                the SSH server.
+        :param password:
+            Object representing the password of the username to authenticate to
+            the target ssh server.
+        :type password:
+            `str`
 
-            password:
-                `str` object representing the password of the username used
-                to authenticate to the SSH server.
+        :param device_type:
+            Object representing the target device type.
+            Possible values:
+            - 'nix'
+              for Linux/Unix-like devices
+            - 'ios'
+              for Cisco IOS-like devices
+            - 'junos'
+              for Juniper JunOS-like devices
+        :type device_type:
+            `str`
 
-            port:
-                `int` object representing the port number of the SSH server.
+        :param port:
+            Object representing the port number of the target ssh server.
+        :type port:
+            `int`
 
+<<<<<<< HEAD
+        :param shell_terminal_type:
+            Object representing the shell terminal type. For example:
+            - vt100
+            - xterm (default)
+            - xterm-256color
+        :type shell_terminal_type:
+            `str`
+
+        :param shell_terminal_width:
+            Object representing the shell terminal width.
+            Default: 132
+        :type shell_terminal_width:
+            `int`
+
+        :param shell_terminal_height:
+            Object representing the shell terminal height.
+            Default: 30
+        :type shell_terminal_height:
+            `int`
+
+        :param shell_timeout:
+            Object representing a shell timeout in seconds. This is the timeout
+            value waiting for data during the
+            <instace>._shell.recv(`number_of_bytes`) process defined in the
+            <instance>.shell_receive() method.
+            Default: 5.0
+        :type shell_timeout:
+            `float` | `int`
+
+        :param jump_hostname:
+            Object representing the hostname or IP Address of a jump ssh
+            server used to get to the target ssh server. Equivalent to OpenSSH
+            option -J.
+            Default: None
+        :type jump_hostname:
+            `str` | `ipaddress.IPv4Address` | `ipaddress.IPv6Address`
+=======
             shell_terminal_type:
                 `str` object representing the shell terminal type:
                   - vt100
@@ -180,12 +345,36 @@ class NetDevSshShell:
             shell_timeout:
                 `float` object representing the period to wait for the shell
                 prompt before raising a `socket.timeout`
+>>>>>>> 2.0
 
-            jump_hostname:
-                `str` object representing the hostname or IP Address of a SSH
-                server used as a jump host to establish a connection with the
-                target SSH server. Equivalent to openssh "ssh -J".
+        :param jump_username:
+            Object representing the username to authenticate to the jump ssh
+            host.
+            Default: None
+        :type jump_username:
+            `str`
 
+<<<<<<< HEAD
+        :param jump_password:
+            Object representing the password of the username to authenticate to
+            the jump ssh host.
+            Default: None
+        :type jump_password:
+            `str`
+        """
+        super().__init__()
+        self.hostname: str = str(hostname)
+        self.port: int = port
+        self.username: str = username
+        self.password: str = password
+        self.device_type = globals()[
+            'DeviceType' + device_type.lower().capitalize()
+        ]()
+        self.shell_terminal_type: str = shell_terminal_type
+        self.shell_receive_number_of_bytes = ShellReceiveNumberOfBytes(
+            shell_terminal_width=shell_terminal_width,
+            shell_terminal_height=shell_terminal_height
+=======
             jump_username:
                 `str` object representing the username used to authenticate to
                 the jump host.
@@ -219,7 +408,9 @@ class NetDevSshShell:
         self.shell_timeout: float = shell_timeout
         self.shell_receive_number_of_bytes: int = (
                 self.shell_terminal_width * self.shell_terminal_height
+>>>>>>> 2.0
         )
+        self._jump_channel: paramiko.channel.Channel | None = None
         self.shell_received_bytes: bytes = ''.encode()
         self._client: paramiko.SSHClient = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(
@@ -231,6 +422,68 @@ class NetDevSshShell:
 
         self._shell = self._return_ssh_shell()
 
+<<<<<<< HEAD
+        self._shell.settimeout(shell_timeout)
+
+        if self.device_type.set_shell_prompt_command:
+            self.shell_send_and_receive(
+                self.device_type.set_shell_prompt_command
+            )
+
+        if self.device_type.no_pagination_command:
+            self.shell_send_and_receive(self.device_type.no_pagination_command)
+
+    def _shell_execute_no_pagination_command(self, no_pagination_command: str) -> None:
+        """
+
+        :param no_pagination_command:
+            Object representing a no pagination command. That is, for example,
+            "terminal length 0" for Cisco IOS shell-like platforms
+            or
+            "set cli screen-length 0" for Juniper JunOS shell-like platforms.
+        :type no_pagination_command:
+            `str`
+
+        :returns:
+            `NoneType`
+        """
+        if no_pagination_command:
+            self.shell_send_and_receive(no_pagination_command, timeout=1.0)
+
+    def _return_ssh_shell(self) -> paramiko.channel.Channel:
+        """
+        Invoke an ssh shell with its parameter (term, width, height), set the
+        ssh shell timeout, and return the ssh shell.
+
+        :returns:
+            `paramiko.channel.Channel` object representing an ssh shell.
+        """
+        ssh_shell = self._client.invoke_shell(
+            term=self.shell_terminal_type,
+            width=self.shell_receive_number_of_bytes.shell_terminal_width,
+            height=self.shell_receive_number_of_bytes.shell_terminal_height
+        )
+
+        sleep(1.0)
+
+        if ssh_shell.recv_ready():
+            while ssh_shell.recv_ready():
+                self.shell_received_bytes += ssh_shell.recv(
+                    self.shell_receive_number_of_bytes
+                )
+
+        sleep(1.0)
+
+        return ssh_shell
+
+    def _ssh_client_connect(self) -> None:
+        """
+        Perform a paramiko.SSHClient instance connect.
+
+        :returns:
+            `NoneType`
+        """
+=======
         self._shell.settimeout(self.shell_timeout)
         self.shell_cli_type: str = self._validate_supplied_shell_cli_type(
             shell_cli_type
@@ -248,6 +501,7 @@ class NetDevSshShell:
         return ssh_shell
 
     def _ssh_client_connect(self):
+>>>>>>> 2.0
         self._client.connect(
             self.hostname,
             port=self.port,
@@ -258,7 +512,39 @@ class NetDevSshShell:
             sock=self._jump_channel
         )
 
+<<<<<<< HEAD
+    def _set_jump_channel(
+            self,
+            jump_hostname: str | ipaddress.IPv4Address | ipaddress.IPv6Address,
+            jump_username: str,
+            jump_password: str) -> None:
+        """
+        If values for jump_hostname and jump_username and jump_password were
+        supplied, then set the jump channel.
+
+        :param jump_hostname:
+            Object representing the jump ssh server hostname
+        :type jump_hostname:
+            `str`
+
+        :param jump_username:
+            Object representing the jump ssh server username to authenticate
+            with.
+        :type jump_username:
+            `str`
+
+        :param jump_password:
+            Object representing the jump ssh server username password to
+            authenticate with.
+        :type jump_password:
+            `str`
+
+        :returns:
+            `NoneType`
+        """
+=======
     def _set_jump_channel(self, jump_hostname, jump_username, jump_password):
+>>>>>>> 2.0
         if jump_hostname and jump_username and jump_password:
             self._jump_channel = self._return_jump_channel(
                 self.hostname,
@@ -267,6 +553,10 @@ class NetDevSshShell:
                 jump_password=jump_password
             )
 
+<<<<<<< HEAD
+    @staticmethod
+    def _remove_ansi_escape_sequences(string_as_bytes: bytes) -> bytes:
+=======
     def _return_shell_cli_type(self, shell_cli_type):
         self.shell_send('\r')
         self._shell_receive()
@@ -306,9 +596,19 @@ class NetDevSshShell:
             self.shell_prompt_regexp = re.compile(self.shell_prompt_pattern)
 
     def _validate_supplied_shell_cli_type(self, shell_cli_type: str) -> str:
+>>>>>>> 2.0
         """
-        Validate the value of the supplied CLI Type.
+        Remove ANSI Escape characters.
 
+<<<<<<< HEAD
+        :param string_as_bytes:
+            Object representing the string to have ANSI escape characters
+            removed.
+        :type string_as_bytes:
+            `bytes`
+
+        :returns:
+=======
         Args:
             shell_cli_type:
                 `str` object representing the shell cli type of the SSH server.
@@ -353,73 +653,99 @@ class NetDevSshShell:
         Remove unnecessary shell prompt escape sequences.
 
         Returns:
+>>>>>>> 2.0
             `bytes`
         """
-        escape_sequence_patterns = br'''
+        ansi_escape_pattern = br'''
             \x1b
             [[:punct:]]
-            [[:print:]]{1,}?
+            [[:print:]]{1,}
             \x07
             |
             \x1b
             [[:punct:]]
+<<<<<<< HEAD
+            [[:digit:]]{1,2}
+            (?:
+                [[:upper]]
+                |
+                [[:lower:]]
+            )
+=======
             [[:digit:]]{1,4}
             [[:lower:]]
+>>>>>>> 2.0
             [[:punct:]]{0,1}
             |
             \x1b
             [[:punct:]]
-            [[:lower:]]
+            [
+                [:upper:]
+                [:lower:]
+            ]
             |
             \x1b
-            [[:punct:]]
-            [[:upper:]]
+            [[:punct:]]{1,2}
+            [[:graph:]]{4,5}
             |
-            \x1b
-            [[:punct:]]{2}
-            [[:graph:]]{4,6}
-            [\x08]{0,1}
+            [[:alpha:]]\x08
             |
             [ ]*\r[ ]*
         '''
         escape_sequence_regexp = re.compile(
-            escape_sequence_patterns,
-            flags=re.VERBOSE | re.VERSION0
+            ansi_escape_pattern,
+            flags=re.VERSION1 | re.VERBOSE
         )
-        return escape_sequence_regexp.sub(b'', self.shell_received_bytes)
+        return escape_sequence_regexp.sub(b'', string_as_bytes)
 
-    def _shell_receive(self) -> None:
+    @property
+    def shell_timeout(self) -> float | int:
         """
-        Used during instance initialisation to receive shell output from the
-        SSH server.
+        The configured `<instance>._shell.timeout value.
 
-        The reason it is used instead of the exposed
-        `<instance>.shell_receive()` method is because the shell prompt hasn't
-        been determined yet.
-
-        Returns:
-            `NoneType`
+        :returns:
+            `float` or `int`
         """
+<<<<<<< HEAD
+        return self._shell.gettimeout()
+
+    @property
+    def shell_is_closed(self) -> bool:
+        """
+        `<instance>.shell_is_closed` @property decorated method representing
+        `<instance>._shell.closed`
+
+        :returns:
+            `bool`
+        """
+        return self._shell.closed
+=======
         if not self._shell_is_closed:
             while self._shell.recv_ready():
                 self.shell_received_bytes += self._shell.recv(
                     self.shell_receive_number_of_bytes
                 )
                 sleep(1.0)
+>>>>>>> 2.0
 
     @property
     def shell_transcript(self) -> str:
         """
         Return a `str` representation of `<instance>.shell_received_bytes`,
-        where `<instance>.shell_received_bytes` is a `bytes` representation.
+        where `<instance>.shell_received_bytes` is a `bytes` representation of
+        the whole ssh shell session.
 
-        Returns:
+        :returns:
             `str`
         """
         return '\n'.join(
             [
-                v.decode() for v in
-                self._remove_ansi_escape_sequences.splitlines()
+                i.decode('utf-8') for i in
+                [
+                    self._remove_ansi_escape_sequences(v)
+                    for v in self.shell_received_bytes.splitlines()
+                ]
+                if not re.search(br'^ {0,}$', i)
             ]
         )
 
@@ -427,14 +753,38 @@ class NetDevSshShell:
         """
         Send a command to the connected SSH server for execution.
 
-        Args:
-            command:
-                `str` object representing the command to be sent to the SSH
-                server.
+        :param command:
+            Object representing the command to be sent to the SSH server.
+        :type command:
+            `str`
 
-        Returns:
+        :returns:
             `NoneType`
 
+<<<<<<< HEAD
+        :raises:
+            `ShellSendError`
+            `ShellClosedError`
+        """
+        if '\r' in command or '\n' in command:
+            raise ValueError(
+                'Command, `{}`, contains "\\r" or "\\n".'.format(
+                    command.encode('unicode_escape').decode()
+                )
+            )
+
+        command_to_send: str = '{}\r'.format(command)
+
+        if not self.shell_is_closed:
+            try:
+                self._shell.sendall(command_to_send.encode())
+            except socket.timeout as socket_timeout:
+                raise ShellTimeoutError(
+                    'SHELL TIMEOUT ERROR: Unable to send command, `{}`, within '
+                    'shell timeout of {} seconds'.format(
+                        command,
+                        self.shell_timeout
+=======
         Raises:
             `ShellSendError`
             `ShellClosedError`
@@ -466,46 +816,83 @@ class NetDevSshShell:
                     'SHELL TIMEOUT ERROR: Unable to send command, {}, within '
                     'shell timeout {} seconds'.format(
                         command_to_send, new_shell_timeout
+>>>>>>> 2.0
                     )
                 ) from socket_timeout
         else:
-            error_text = 'SHELL CLOSED ERROR: Unable to send command,' \
+            error_text: str = 'SHELL CLOSED ERROR: Unable to send command, ' \
                          '`{}`, to remote SSH server because the shell is ' \
                          'closed.'.format(command)
             raise ShellClosedError(error_text)
 
+<<<<<<< HEAD
+        if not self._shell.recv_ready():
+            sleep(1.0)
+
+    def shell_receive(self, timeout: float | int | None = None) -> None:
+=======
         self._shell.settimeout(original_shell_timeout)
         sleep(1.0)
 
     def shell_receive(self, timeout: float = -1.0) -> None:
+>>>>>>> 2.0
         """
         Receive the output of a command executed on the SSH server.
 
-        Args:
-            timeout:
-                `float` object representing the period to wait for the shell
-                prompt before a socket.timeout is raised
-        Returns:
+        :param timeout:
+            Object representing a time period, in seconds, to wait, during
+            `<instance>._shell.recv(`<number_of_bytes>`)`, before a
+            `socket.timeout` error is raised.
+        :type timeout:
+            `float` | `int` | `NoneType`
+
+        :returns:
             `NoneType`
 
-        Raises:
+        :raises:
             `ShellClosedError`
             `ShellTimeoutError`
         """
+<<<<<<< HEAD
+        original_shell_timeout: float | int = self._shell.gettimeout()
+=======
         timeout_values = (-1, -1.0, 90, 90.0, 0, 0.0)
         original_shell_timeout = self.shell_timeout
+>>>>>>> 2.0
 
-        if timeout not in timeout_values:
+        if timeout not in (None, -1, -1.0, 0) and timeout != self.shell_timeout:
             self._shell.settimeout(timeout)
 
+<<<<<<< HEAD
+        received_bytes: bytes = ''.encode()
+
+        while not self.device_type.shell_prompt_regexp.search(
+                self._remove_ansi_escape_sequences(received_bytes)):
+=======
         received_bytes = ''.encode()
 
         while not (self.shell_prompt_regexp.search(received_bytes) or
                    received_bytes.endswith(self.shell_prompt_pattern)):
+>>>>>>> 2.0
             try:
                 received_bytes += self._shell.recv(
                     self.shell_receive_number_of_bytes
                 )
+<<<<<<< HEAD
+                # print(received_bytes)
+                # print(self._remove_ansi_escape_sequences(received_bytes))
+                if not self._shell.recv_ready():
+                    sleep(1.0)
+            except socket.timeout as socket_timeout:
+                self.shell_received_bytes += received_bytes
+                error_text: str = 'SHELL TIMEOUT ERROR: shell prompt pattern ' \
+                                  'not received before timeout of {} seconds'
+                raise ShellTimeoutError(
+                    error_text.format(self._shell.gettimeout())
+                ) from socket_timeout
+
+            if self.shell_is_closed:
+=======
 
                 if not self._shell.recv_ready():
                     sleep(1.0)
@@ -515,28 +902,33 @@ class NetDevSshShell:
                 raise ShellTimeoutError(error_text) from socket_timeout
 
             if self._shell_is_closed:
+>>>>>>> 2.0
                 break
 
         self.shell_received_bytes += received_bytes
 
         self._shell.settimeout(original_shell_timeout)
 
-    def shell_send_and_receive(self, command: str, timeout: float = -1) -> None:
+    def shell_send_and_receive(self, command: str,
+                               timeout: float | int | None = None) -> None:
         """
         A method that uses both `<instance>.shell_send()` and
         `<instance>.shell_receive()`
 
-        Args:
-            command:
-                see `shell_send()` docstring
+        :param command:
+            see `shell_send()` docstring
+        :type command:
+            `str`
 
-            timeout:
-                see `shell_received()` docstring
+        :param timeout:
+            see `shell_received()` docstring
+        :type timeout:
+            `float` | `int` | `NoneType`
 
-        Returns:
+        :returns:
             `NoneType`
 
-        Raises:
+        :raises:
             see `shell_send()` docstring
             see `shell_receive()` docstring
         """
@@ -553,32 +945,39 @@ class NetDevSshShell:
         used as a jump host to establish a connection with the target SSH
         server.
 
-        Args:
-            destination:
-                `str` object representing the hostname or IP Address of the
-                target SSH server
+        :param destination:
+            Object representing the hostname or IP Address of the target SSH
+            server.
+        :type destination:
+            `str`
 
-            jump_hostname:
-                `str` object representing the hostname or IP Address of the
-                SSH server to be used as the jump host.
+        :param jump_hostname:
+            Object representing the hostname or IP Address of the SSH server to
+            be used as the jump host.
+        :type jump_hostname:
+            `str`
 
-            jump_username:
-                `str` object representing the username used to authenticate to
-                the SSH server to be used as the jump host.
+        :param jump_username:
+            Object representing the username used to authenticate to the SSH
+            server to be used as the jump host.
+        :type jump_username:
+            `str`
 
-            jump_password:
-                `str` object representing the password of the username used to
-                authenticate to the SSH server to be used as the jump host.
+        :param jump_password:
+            Object representing the password of the username used to
+            authenticate to the SSH server to be used as the jump host.
+        :type jump_password:
+            `str`
 
-        Returns:
+        :returns:
             `paramiko.channel.Channel` object
         """
         client = paramiko.SSHClient()
 
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
 
-        source = ('127.0.0.1', 22)
-        destination = (destination, 22)
+        source: tuple = ('127.0.0.1', 22)
+        destination: tuple = (destination, 22)
 
         client.connect(
             jump_hostname,
@@ -588,8 +987,8 @@ class NetDevSshShell:
             look_for_keys=False
         )
 
-        transport = client.get_transport()
-        channel = transport.open_channel(
+        transport: paramiko.transport.Transport = client.get_transport()
+        channel: paramiko.channel.Channel = transport.open_channel(
             'direct-tcpip',
             dest_addr=destination,
             src_addr=source
@@ -601,6 +1000,15 @@ class NetDevSshShell:
         return self.shell_transcript
 
     def __repr__(self):
+<<<<<<< HEAD
+        repr_text: str = '<{}(Hostname={}, ' \
+                         'Port Number={}, ' \
+                         'Shell Terminal Type={}, ' \
+                         'Shell Terminal Width={}, ' \
+                         'Shell Terminal Height={}, ' \
+                         'Shell Receive Number of Bytes={}, ' \
+                         'Shell Timeout={})>'
+=======
         repr_text = '<{}(Hostname={}, ' \
                     'Port Number={}, ' \
                     'Shell Terminal Type={}, ' \
@@ -609,14 +1017,35 @@ class NetDevSshShell:
                     'Shell CLI Type={}, ' \
                     'Shell Timeout={}, ' \
                     'Shell Receive Number of Bytes={})>'
+>>>>>>> 2.0
         return repr_text.format(
             self.__class__.__name__,
             self.hostname,
             self.port,
             self.shell_terminal_type,
+<<<<<<< HEAD
+            self.shell_receive_number_of_bytes.shell_terminal_width,
+            self.shell_receive_number_of_bytes.shell_terminal_height,
+            self.shell_receive_number_of_bytes,
+            self.shell_timeout
+        )
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._shell.close()
+        self._client.close()
+
+    def __del__(self):
+        if hasattr(self, '_shell'):
+            delattr(self, '_shell')
+            delattr(self, '_client')
+=======
             self.shell_terminal_width,
             self.shell_terminal_height,
             self.shell_cli_type,
             self.shell_timeout,
             self.shell_receive_number_of_bytes
         )
+>>>>>>> 2.0

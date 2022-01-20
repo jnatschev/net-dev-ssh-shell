@@ -1,0 +1,37 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "netdevsshshell"
+requires-python = ">=3.7,<3.11"
+dependencies = [
+    "paramiko >=2.6",
+    "regex >=2021.3.17"
+]
+authors = [{name = "John Natschev", email = "jnatschev@icloud.com"}]
+maintainers = [{name = "John Natschev", email = "jnatschev@icloud.com"}]
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Shells"
+]
+dynamic = ["version", "description"]
+
+
+[project.urls]
+Home = "https://github.com/jnatschev/net-dev-ssh-shell"
+Source = "https://github.com/jnatschev/net-dev-ssh-shell/tree/main/netdevsshshell"
