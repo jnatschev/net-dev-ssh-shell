@@ -69,7 +69,7 @@ __all__ = [
     'ShellTimeoutError',
 ]
 
-__version_info__ = (2, 0, 0)
+__version_info__ = (0, 1, 0)
 __version__ = '{}.{}.{}'.format(*__version_info__)
 __author__ = 'John Natschev <jnatschev@icloud.com>'
 __copying__ = 'GPL-3.0-or-later'
